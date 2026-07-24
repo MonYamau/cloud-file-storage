@@ -12,7 +12,6 @@ repositories {
 
 ext {
   junitVersion = '5.13.2'
-  springVersion = '7.0.8'
 }
 
 sourceCompatibility = '21'
@@ -23,11 +22,11 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 dependencies {
-  compileOnly "jakarta.servlet:jakarta.servlet-api:6.1.0"
-//  implementation "org.springframework:spring-context:${springVersion}"
-//  implementation "org.springframework:spring-core:${springVersion}"
-//  implementation "org.springframework:spring-web:${springVersion}"
-//  implementation "org.springframework:spring-webmvc:${springVersion}"
+  providedCompile "jakarta.servlet:jakarta.servlet-api:6.1.0"
+  implementation "org.springframework:spring-webmvc:7.0.8"
+  implementation "org.hibernate.orm:hibernate-core:7.4.4.Final"
+  implementation "org.springframework.data:spring-data-jpa:4.1.0"
+  implementation "com.mysql:mysql-connector-j:9.7.0"
 
   testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
