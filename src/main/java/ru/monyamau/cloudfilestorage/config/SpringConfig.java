@@ -8,6 +8,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -25,6 +29,7 @@ import java.util.Properties;
 @EnableWebMvc
 @PropertySource("classpath:db.properties")
 @PropertySource("classpath:hibernate.properties")
+@PropertySource("classpath:redis.properties")
 @EnableJpaRepositories("ru.monyamau.cloudfilestorage.repository")
 @EnableTransactionManagement
 public class SpringConfig implements WebMvcConfigurer {
@@ -49,6 +54,21 @@ public class SpringConfig implements WebMvcConfigurer {
         Properties properties = new Properties();
         properties.put("hibernate.show_sql", env.getRequiredProperty("hibernate.show_sql"));
         return properties;
+    }
+
+    @Bean
+    public RedisConnectionFactory redisFactory() {
+        RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration(
+                env.getRequiredProperty("redis.host"),
+                Integer.parseInt(env.getRequiredProperty("redis.port")));
+        return new LettuceConnectionFactory(redisConfig);
+    }
+
+    @Bean
+    public StringRedisTemplate redisTemplate(RedisConnectionFactory connectionFactory) {
+        StringRedisTemplate template = new StringRedisTemplate();
+        template.setConnectionFactory(connectionFactory);
+        return template;
     }
 
     @Bean
