@@ -9,12 +9,12 @@ import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
 @RequestMapping("/directory")
 public class DirectoryController {
     @GetMapping
-    public ResponseEntity<ResponseResourceDto> showAbout(@RequestParam(name="path") String path) {
+    public ResponseEntity<ResponseResourceDto> showAbout(@RequestParam(name = "path") String path) {
         return new ResponseEntity<>(new ResponseResourceDto("", "", null, ""), HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<ResponseResourceDto> create(@RequestParam(name="path") String path) {
+    public ResponseEntity<ResponseResourceDto> create(@RequestParam(name = "path") String path) {
         return new ResponseEntity<>(new ResponseResourceDto("", "", null, ""), HttpStatus.CREATED);
     }
 }

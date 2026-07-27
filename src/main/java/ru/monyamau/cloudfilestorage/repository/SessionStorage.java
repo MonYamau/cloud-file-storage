@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.util.Optional;
 
 @Repository
 public class SessionStorage {
@@ -15,12 +16,12 @@ public class SessionStorage {
         this.redisTemplate = redisTemplate;
     }
 
-    public void save(String key, String value, long ttlMin) {
+    public void save(String key, String value, int ttlMin) {
         redisTemplate.opsForValue().set(key, value, Duration.ofMinutes(ttlMin));
     }
 
-    public String findBy(String key) {
-        return redisTemplate.opsForValue().get(key);
+    public Optional<String> findBy(String key) {
+        return Optional.ofNullable(redisTemplate.opsForValue().get(key));
     }
 
     public void delete(String key) {
