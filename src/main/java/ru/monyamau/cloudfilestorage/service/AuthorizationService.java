@@ -3,7 +3,7 @@ package ru.monyamau.cloudfilestorage.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.monyamau.cloudfilestorage.dto.request.RequestUserDto;
-import ru.monyamau.cloudfilestorage.model.User;
+import ru.monyamau.cloudfilestorage.entity.User;
 import ru.monyamau.cloudfilestorage.repository.SessionStorage;
 import ru.monyamau.cloudfilestorage.repository.UserRepository;
 

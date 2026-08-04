@@ -28,9 +28,9 @@ import java.util.Properties;
 @Configuration
 @ComponentScan("ru.monyamau.cloudfilestorage")
 @EnableWebMvc
-@PropertySource("classpath:db.properties")
-@PropertySource("classpath:hibernate.properties")
-@PropertySource("classpath:redis.properties")
+@PropertySource({"classpath:db.properties",
+        "classpath:hibernate.properties",
+        "classpath:redis.properties",
         "classpath:minio.properties"})
 @EnableJpaRepositories("ru.monyamau.cloudfilestorage.repository")
 @EnableTransactionManagement
@@ -78,7 +78,7 @@ public class SpringConfig implements WebMvcConfigurer {
         LocalContainerEntityManagerFactoryBean managerFactoryBean = new LocalContainerEntityManagerFactoryBean();
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         managerFactoryBean.setDataSource(dataSource());
-        managerFactoryBean.setPackagesToScan("ru.monyamau.cloudfilestorage.model");
+        managerFactoryBean.setPackagesToScan("ru.monyamau.cloudfilestorage.entity");
         managerFactoryBean.setJpaVendorAdapter(vendorAdapter);
         managerFactoryBean.setJpaProperties(hibernateProperties());
         return managerFactoryBean;

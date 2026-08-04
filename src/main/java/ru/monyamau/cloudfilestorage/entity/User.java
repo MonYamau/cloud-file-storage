@@ -1,4 +1,4 @@
-package ru.monyamau.cloudfilestorage.model;
+package ru.monyamau.cloudfilestorage.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
