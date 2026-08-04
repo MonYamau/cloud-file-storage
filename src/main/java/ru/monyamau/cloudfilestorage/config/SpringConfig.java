@@ -1,5 +1,6 @@
 package ru.monyamau.cloudfilestorage.config;
 
+import io.minio.MinioClient;
 import jakarta.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +31,7 @@ import java.util.Properties;
 @PropertySource("classpath:db.properties")
 @PropertySource("classpath:hibernate.properties")
 @PropertySource("classpath:redis.properties")
+        "classpath:minio.properties"})
 @EnableJpaRepositories("ru.monyamau.cloudfilestorage.repository")
 @EnableTransactionManagement
 public class SpringConfig implements WebMvcConfigurer {
@@ -85,5 +87,13 @@ public class SpringConfig implements WebMvcConfigurer {
     @Bean
     public PlatformTransactionManager transactionManager(EntityManagerFactory entityManagerFactory) {
         return new JpaTransactionManager(entityManagerFactory);
+    }
+
+    @Bean
+    public MinioClient minioClient() {
+        return MinioClient.builder()
+                .credentials(env.getRequiredProperty("minio.access_key"), env.getRequiredProperty("minio.secret_key"))
+                .endpoint(env.getRequiredProperty("minio.endpoint"))
+                .build();
     }
 }

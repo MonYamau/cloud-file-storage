@@ -32,6 +32,7 @@ dependencies {
   runtimeOnly "com.mysql:mysql-connector-j:9.7.0"
   runtimeOnly "io.lettuce:lettuce-core:7.6.0.RELEASE"
 
+  implementation "io.minio:minio:9.0.3"
   implementation "org.hibernate.orm:hibernate-core:7.4.4.Final"
   implementation "org.springframework:spring-webmvc"
   implementation "org.springframework.data:spring-data-jpa"
