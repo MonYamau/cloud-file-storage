@@ -13,7 +13,7 @@ repositories {
 ext {
   junitVersion = '5.13.2'
   springVersion = '7.0.8'
-  springDataVersion = '4.1.0'
+  springDataVersion = '2026.0.0'
   lombokVersion = '1.18.46'
 }
 
@@ -25,15 +25,17 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 dependencies {
+  implementation platform("org.springframework:spring-framework-bom:${springVersion}")
+  implementation platform("org.springframework.data:spring-data-bom:${springDataVersion}")
   providedCompile "jakarta.servlet:jakarta.servlet-api:6.1.0"
 
   runtimeOnly "com.mysql:mysql-connector-j:9.7.0"
   runtimeOnly "io.lettuce:lettuce-core:7.6.0.RELEASE"
 
   implementation "org.hibernate.orm:hibernate-core:7.4.4.Final"
-  implementation "org.springframework:spring-webmvc:${springVersion}"
-  implementation "org.springframework.data:spring-data-jpa:${springDataVersion}"
-  implementation "org.springframework.data:spring-data-redis:${springDataVersion}"
+  implementation "org.springframework:spring-webmvc"
+  implementation "org.springframework.data:spring-data-jpa"
+  implementation "org.springframework.data:spring-data-redis"
   implementation "com.fasterxml.jackson.core:jackson-databind:2.22.1"
 
   compileOnly "org.projectlombok:lombok:${lombokVersion}"
