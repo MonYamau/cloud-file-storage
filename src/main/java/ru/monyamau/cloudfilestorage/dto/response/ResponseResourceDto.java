@@ -1,4 +1,6 @@
 package ru.monyamau.cloudfilestorage.dto.response;
 
-public record ResponseResourceDto(String path, String name, Integer size, String type) {
+import ru.monyamau.cloudfilestorage.model.ResourceType;
+
+public record ResponseResourceDto(String path, String name, Long size, ResourceType type) {
 }
