@@ -6,6 +6,7 @@ import ru.monyamau.cloudfilestorage.dto.request.RequestUserDto;
 import ru.monyamau.cloudfilestorage.entity.User;
 import ru.monyamau.cloudfilestorage.repository.SessionStorage;
 import ru.monyamau.cloudfilestorage.repository.UserRepository;
+import ru.monyamau.cloudfilestorage.util.PassHashUtil;
 
 import java.util.UUID;
 
@@ -22,7 +23,8 @@ public class AuthorizationService {
     }
 
     public String registerUser(UUID uuid, RequestUserDto userDto, int ttlMin) {
-        User savedUser = userRepository.saveAndFlush(new User(userDto.username(), userDto.password()));
+        String hash = PassHashUtil.hash(userDto.password());
+        User savedUser = userRepository.saveAndFlush(new User(userDto.username(), hash));
         sessionStorage.save(String.valueOf(uuid), savedUser.getName(), ttlMin);
         return savedUser.getName();
     }
@@ -30,7 +32,7 @@ public class AuthorizationService {
     //TODO (exceptions)
     public String authorizeUser(UUID uuid, RequestUserDto userDto, int ttlMin) {
         User user = userRepository.getUserByName(userDto.username()).orElseThrow(() -> new RuntimeException("UncorrectedName"));
-        if (!user.getName().equals(userDto.username()) && !user.getPassword().equals(userDto.password())) {
+        if (!user.getName().equals(userDto.username()) && !PassHashUtil.check(userDto.password(), user.getPassword())) {
             throw new RuntimeException("UncorrectedPassword");
         }
         sessionStorage.save(String.valueOf(uuid), user.getName(), ttlMin);
