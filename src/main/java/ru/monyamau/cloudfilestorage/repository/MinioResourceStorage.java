@@ -1,6 +1,7 @@
 package ru.monyamau.cloudfilestorage.repository;
 
 import io.minio.*;
+import io.minio.errors.ErrorResponseException;
 import io.minio.errors.MinioException;
 import io.minio.messages.Item;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import ru.monyamau.cloudfilestorage.model.ResourceItem;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,14 +17,14 @@ import java.util.Optional;
 
 //TODO exceptions
 @Repository
-public class MinioStorage {
+public class MinioResourceStorage {
     private static final long AUTOMATIC_BUFFER = -1;
     private static final String NOT_FOUND_RESOURCE = "NoSuchKey";
     private final MinioClient minioClient;
     private final String bucketName;
 
     @Autowired
-    public MinioStorage(MinioClient minioClient, @Value("${minio.bucket-name}") String bucketName) {
+    public MinioResourceStorage(MinioClient minioClient, @Value("${minio.bucket-name}") String bucketName) {
         this.minioClient = minioClient;
         this.bucketName = bucketName;
     }
@@ -35,7 +37,6 @@ public class MinioStorage {
                             .object(objectPath)
                             .build()
             );
-            if (response == null) {
             return Optional.of(new ResourceItem(response.object(), false, response.size()));
         } catch (ErrorResponseException e) {
             if (e.errorResponse().code().equals(NOT_FOUND_RESOURCE)) {
@@ -56,20 +57,24 @@ public class MinioStorage {
                             .prefix(objectPath)
                             .build()
             );
-            if (results == null) {
-                return Optional.empty();
-            }
-            for (Result<Item> result : results) {
-                Item item = result.get();
-                if (item.isDir()) {
-                    return Optional.of(new ResourceItem(item.objectName(), objectPath, true, item.size()));
-                }
             if (results.iterator().hasNext()) {
                 return Optional.of(new ResourceItem(objectPath, true, null));
             }
             return Optional.empty();
-        } catch (MinioException e) {
-            throw new RuntimeException("minio error");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void createDirectory(String directoryName) {
+        try {
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(directoryName)
+                            .stream(new ByteArrayInputStream(new byte[] {}), 0L, AUTOMATIC_BUFFER)
+                            .build()
+            );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -82,7 +87,7 @@ public class MinioStorage {
                     ListObjectsArgs.builder()
                             .bucket(bucketName)
                             .prefix(prefix)
-                            .recursive(false)
+                            .recursive(true)
                             .build()
             );
             for (Result<Item> result : results) {
@@ -90,8 +95,6 @@ public class MinioStorage {
                 itemList.add(new ResourceItem(item.objectName(), item.isDir(), item.size()));
             }
             return itemList;
-        } catch (MinioException e) {
-            throw new RuntimeException("minio error");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -107,8 +110,6 @@ public class MinioStorage {
                             .contentType(contentType)
                             .build()
             );
-        } catch (MinioException e) {
-            throw new RuntimeException("minio error");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -122,8 +123,6 @@ public class MinioStorage {
                             .object(objectPath)
                             .build()
             );
-        } catch (MinioException e) {
-            throw new RuntimeException("minio error");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -137,8 +136,6 @@ public class MinioStorage {
                             .object(objectPath)
                             .build()
             );
-        } catch (MinioException e) {
-            throw new RuntimeException("minio error");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
