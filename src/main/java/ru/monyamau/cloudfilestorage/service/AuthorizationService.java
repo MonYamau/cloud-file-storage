@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.monyamau.cloudfilestorage.dto.request.RequestUserDto;
 import ru.monyamau.cloudfilestorage.entity.User;
-import ru.monyamau.cloudfilestorage.repository.SessionStorage;
+import ru.monyamau.cloudfilestorage.repository.RedisSessionStorage;
 import ru.monyamau.cloudfilestorage.repository.UserRepository;
 import ru.monyamau.cloudfilestorage.util.PassHashUtil;
 
@@ -14,10 +14,10 @@ import java.util.UUID;
 @Service
 public class AuthorizationService {
     private final UserRepository userRepository;
-    private final SessionStorage sessionStorage;
+    private final RedisSessionStorage sessionStorage;
 
     @Autowired
-    public AuthorizationService(UserRepository userRepository, SessionStorage sessionStorage) {
+    public AuthorizationService(UserRepository userRepository, RedisSessionStorage sessionStorage) {
         this.userRepository = userRepository;
         this.sessionStorage = sessionStorage;
     }

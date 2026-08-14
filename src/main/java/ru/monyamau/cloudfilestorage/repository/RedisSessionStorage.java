@@ -8,11 +8,11 @@ import java.time.Duration;
 import java.util.Optional;
 
 @Repository
-public class SessionStorage {
+public class RedisSessionStorage {
     private final StringRedisTemplate redisTemplate;
 
     @Autowired
-    public SessionStorage(StringRedisTemplate redisTemplate) {
+    public RedisSessionStorage(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
