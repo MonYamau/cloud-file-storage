@@ -17,6 +17,7 @@ import java.util.Optional;
 @Repository
 public class MinioStorage {
     private static final long AUTOMATIC_BUFFER = -1;
+    private static final String NOT_FOUND_RESOURCE = "NoSuchKey";
     private final MinioClient minioClient;
     private final String bucketName;
 
@@ -35,9 +36,12 @@ public class MinioStorage {
                             .build()
             );
             if (response == null) {
+            return Optional.of(new ResourceItem(response.object(), false, response.size()));
+        } catch (ErrorResponseException e) {
+            if (e.errorResponse().code().equals(NOT_FOUND_RESOURCE)) {
                 return Optional.empty();
             }
-            return Optional.of(new ResourceItem(response.object(), objectPath, false, response.size()));
+            throw new RuntimeException(e);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -60,6 +64,8 @@ public class MinioStorage {
                 if (item.isDir()) {
                     return Optional.of(new ResourceItem(item.objectName(), objectPath, true, item.size()));
                 }
+            if (results.iterator().hasNext()) {
+                return Optional.of(new ResourceItem(objectPath, true, null));
             }
             return Optional.empty();
         } catch (MinioException e) {
@@ -81,7 +87,7 @@ public class MinioStorage {
             );
             for (Result<Item> result : results) {
                 Item item = result.get();
-                itemList.add(new ResourceItem(item.objectName(), prefix, item.isDir(), itemList.size()));
+                itemList.add(new ResourceItem(item.objectName(), item.isDir(), item.size()));
             }
             return itemList;
         } catch (MinioException e) {
