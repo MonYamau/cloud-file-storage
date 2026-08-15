@@ -53,7 +53,7 @@ public class AuthorizationController {
 
     @PostMapping("/sign-out")
     public ResponseEntity<HttpStatus> signOut(HttpServletRequest request) {
-        Cookie cookie = CookieUtil.findSessionId(request);
+        Cookie cookie = CookieUtil.findSessionId(request).orElseThrow(RuntimeException::new);
         authService.logoutUser(cookie.getValue());
         ResponseCookie deletedCookie = CookieUtil.delete();
         return ResponseEntity

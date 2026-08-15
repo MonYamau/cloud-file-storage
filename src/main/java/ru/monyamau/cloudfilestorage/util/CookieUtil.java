@@ -6,6 +6,7 @@ import lombok.experimental.UtilityClass;
 import org.springframework.http.ResponseCookie;
 
 import java.time.Duration;
+import java.util.Optional;
 
 @UtilityClass
 public final class CookieUtil {
@@ -30,15 +31,17 @@ public final class CookieUtil {
     }
 
     //TODO (exception)
-    public static Cookie findSessionId(HttpServletRequest request) {
+    public static Optional<Cookie> findSessionId(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
+        Cookie result = null;
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if (cookie.getName().equals(COOKIE_NAME)) {
-                    return cookie;
+                    result = cookie;
+                    break;
                 }
             }
         }
-        throw new RuntimeException("Not find");
+        return Optional.ofNullable(result);
     }
 }
