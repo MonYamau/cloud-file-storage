@@ -19,26 +19,23 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.sql.DataSource;
 import java.util.Properties;
 
 @Configuration
 @ComponentScan("ru.monyamau.cloudfilestorage")
-@EnableWebMvc
 @PropertySource({"classpath:db.properties",
         "classpath:hibernate.properties",
         "classpath:redis.properties",
         "classpath:minio.properties"})
 @EnableJpaRepositories("ru.monyamau.cloudfilestorage.repository")
 @EnableTransactionManagement
-public class SpringConfig implements WebMvcConfigurer {
+public class ApplicationConfig {
     private final Environment env;
 
     @Autowired
-    public SpringConfig(Environment env) {
+    public ApplicationConfig(Environment env) {
         this.env = env;
     }
 

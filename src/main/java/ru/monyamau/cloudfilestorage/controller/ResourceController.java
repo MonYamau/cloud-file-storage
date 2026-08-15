@@ -10,7 +10,7 @@ import ru.monyamau.cloudfilestorage.model.ResourceType;
 import java.util.List;
 
 @RestController
-@RequestMapping("/resource")
+@RequestMapping("/api/resource")
 public class ResourceController {
     @GetMapping
     public ResponseEntity<ResponseResourceDto> showAbout(@RequestParam(name = "path") String path) {

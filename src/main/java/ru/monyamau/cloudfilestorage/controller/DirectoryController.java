@@ -7,7 +7,7 @@ import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
 import ru.monyamau.cloudfilestorage.model.ResourceType;
 
 @RestController
-@RequestMapping("/directory")
+@RequestMapping("/api/directory")
 public class DirectoryController {
     @GetMapping
     public ResponseEntity<ResponseResourceDto> showAbout(@RequestParam(name = "path") String path) {

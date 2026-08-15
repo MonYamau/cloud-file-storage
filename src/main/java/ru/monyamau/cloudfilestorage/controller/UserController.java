@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseUserDto;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api/user")
 public class UserController {
     @GetMapping("/me")
     public ResponseEntity<ResponseUserDto> showCurrentUser() {
