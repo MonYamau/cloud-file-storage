@@ -25,7 +25,7 @@ public class AuthorizationService {
     public String registerUser(UUID uuid, RequestUserDto userDto, int ttlMin) {
         String hash = PassHashUtil.hash(userDto.password());
         User savedUser = userRepository.saveAndFlush(new User(userDto.username(), hash));
-        sessionStorage.save(String.valueOf(uuid), savedUser.getName(), ttlMin);
+        sessionStorage.save(String.valueOf(uuid), String.valueOf(savedUser.getId()), ttlMin);
         return savedUser.getName();
     }
 
@@ -35,7 +35,7 @@ public class AuthorizationService {
         if (!user.getName().equals(userDto.username()) && !PassHashUtil.check(userDto.password(), user.getPassword())) {
             throw new RuntimeException("UncorrectedPassword");
         }
-        sessionStorage.save(String.valueOf(uuid), user.getName(), ttlMin);
+        sessionStorage.save(String.valueOf(uuid), String.valueOf(user.getId()), ttlMin);
         return user.getName();
     }
 
