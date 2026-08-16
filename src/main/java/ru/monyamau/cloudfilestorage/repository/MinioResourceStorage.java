@@ -2,7 +2,8 @@ package ru.monyamau.cloudfilestorage.repository;
 
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
-import io.minio.errors.MinioException;
+import io.minio.messages.DeleteRequest.Object;
+import io.minio.messages.DeleteResult.Error;
 import io.minio.messages.Item;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -128,7 +129,7 @@ public class MinioResourceStorage {
         }
     }
 
-    public void delete(String objectPath) {
+    public void deleteFile(String objectPath) {
         try {
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
@@ -140,4 +141,30 @@ public class MinioResourceStorage {
             throw new RuntimeException(e);
         }
     }
+
+    public void deleteDirectory(String objectPath) {
+        try {
+            List<ResourceItem> result = findAllByPrefix(objectPath);
+            result.forEach(System.out::println);
+            List<Object> deletedList = new ArrayList<>();
+            for (ResourceItem item : result) {
+                deletedList.add(new Object(item.objectName()));
+            }
+            Iterable<Result<Error>> results = minioClient.removeObjects(
+                    RemoveObjectsArgs.builder()
+                            .bucket(bucketName)
+                            .objects(deletedList)
+                            .build()
+            );
+            for (Result<Error> errorResult : results) {
+                if (errorResult.get() != null) {
+                    throw new RuntimeException(errorResult.get().message());
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    //TODO сделать метод на проверку слэша (директории)
 }
