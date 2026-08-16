@@ -20,7 +20,7 @@ public class SessionInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         Cookie currentCookie = CookieUtil.findSessionId(request).orElseThrow(() -> new RuntimeException("Не нашлась сессия"));
         String userId = sessionStorage.findBy(currentCookie.getValue()).orElseThrow(() -> new RuntimeException("Не нашёлся пользователь"));
-        request.setAttribute("userId", userId);
+        request.setAttribute("userId", Integer.parseInt(userId));
         return true;
     }
 }
