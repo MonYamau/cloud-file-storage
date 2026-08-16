@@ -6,15 +6,24 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
 import ru.monyamau.cloudfilestorage.model.ResourceType;
+import ru.monyamau.cloudfilestorage.service.ResourceService;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/resource")
 public class ResourceController {
+    private final ResourceService resourceService;
+
+    public ResourceController(ResourceService resourceService) {
+        this.resourceService = resourceService;
+    }
+
     @GetMapping
-    public ResponseEntity<ResponseResourceDto> showAbout(@RequestParam(name = "path") String path) {
-        return new ResponseEntity<>(new ResponseResourceDto("", "", null, ResourceType.FILE), HttpStatus.OK);
+    public ResponseEntity<ResponseResourceDto> showAbout(@RequestParam(name = "path") String path, @RequestAttribute(name = "userId") int userId) {
+        String personalDirectory = resourceService.findPersonalDirectory(userId);
+        ResponseResourceDto resource = resourceService.findResource(personalDirectory + path);
+        return new ResponseEntity<>(resource, HttpStatus.OK);
     }
 
     @DeleteMapping

@@ -1,0 +1,58 @@
+package ru.monyamau.cloudfilestorage.service;
+
+import org.springframework.stereotype.Service;
+import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
+import ru.monyamau.cloudfilestorage.model.ResourceItem;
+import ru.monyamau.cloudfilestorage.model.ResourceType;
+import ru.monyamau.cloudfilestorage.repository.MinioResourceStorage;
+
+import java.util.Optional;
+
+@Service
+public class ResourceService {
+    private final static String PERSONAL_DIRECTORY_NAME = "user-%s-files/";
+
+    private final MinioResourceStorage resourceStorage;
+
+    public ResourceService(MinioResourceStorage resourceStorage) {
+        this.resourceStorage = resourceStorage;
+    }
+
+    public String findPersonalDirectory(int userId) {
+        String directoryName = PERSONAL_DIRECTORY_NAME.formatted(userId);
+        Optional<ResourceItem> result = resourceStorage.findDirectory(directoryName);
+        if (result.isEmpty()) {
+            resourceStorage.createDirectory(directoryName);
+            ResourceItem newUserDirectory = resourceStorage.findDirectory(directoryName).orElseThrow(RuntimeException::new);
+            return newUserDirectory.objectName();
+        }
+        return result.get().objectName();
+    }
+
+    public ResponseResourceDto findResource(String path) {
+        if (path.endsWith("/")) {
+            ResourceItem directory = resourceStorage.findDirectory(path).orElseThrow(RuntimeException::new);
+            return convert(directory);
+        }
+        ResourceItem file = resourceStorage.findFile(path).orElseThrow(RuntimeException::new);
+        return convert(file);
+    }
+
+    public ResponseResourceDto convert(ResourceItem item) {
+        String[] resources = item.objectName().split("/");
+        String path = collectPath(resources);
+        String name = resources[resources.length - 1];
+        if (item.objectName().endsWith("/") || item.isDir()) {
+            return new ResponseResourceDto(path, name, null, ResourceType.DIRECTORY);
+        }
+        return new ResponseResourceDto(path, name, item.size(), ResourceType.FILE);
+    }
+
+    public String collectPath(String[] resources) {
+        StringBuilder path = new StringBuilder();
+        for (int i = 1; i < resources.length - 1; i++) {
+            path.append(resources[i]).append("/");
+        }
+        return path.toString();
+    }
+}
