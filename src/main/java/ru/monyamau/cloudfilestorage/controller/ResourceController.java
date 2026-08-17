@@ -22,12 +22,14 @@ public class ResourceController {
     @GetMapping
     public ResponseEntity<ResponseResourceDto> showAbout(@RequestParam(name = "path") String path, @RequestAttribute(name = "userId") int userId) {
         String personalDirectory = resourceService.findPersonalDirectory(userId);
-        ResponseResourceDto resource = resourceService.findResource(personalDirectory + path);
-        return new ResponseEntity<>(resource, HttpStatus.OK);
+        ResponseResourceDto resourceDto = resourceService.findResource(personalDirectory + path);
+        return new ResponseEntity<>(resourceDto, HttpStatus.OK);
     }
 
     @DeleteMapping
-    public ResponseEntity<HttpStatus> delete(@RequestParam(name = "path") String path) {
+    public ResponseEntity<HttpStatus> delete(@RequestParam(name = "path") String path, @RequestAttribute(name = "userId") int userId) {
+        String personalDirectory = resourceService.findPersonalDirectory(userId);
+        resourceService.deleteResource(personalDirectory + path);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -43,8 +45,10 @@ public class ResourceController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ResponseResourceDto>> search(@RequestParam(name = "query") String query) {
-        return new ResponseEntity<>(List.of(new ResponseResourceDto("", "", null, ResourceType.FILE)), HttpStatus.OK);
+    public ResponseEntity<List<ResponseResourceDto>> search(@RequestParam(name = "query") String query, @RequestAttribute(name = "userId") int userId) {
+        String personalDirectory = resourceService.findPersonalDirectory(userId);
+        List<ResponseResourceDto> resourceDtoList = resourceService.searchResource(personalDirectory, query);
+        return new ResponseEntity<>(resourceDtoList, HttpStatus.OK);
     }
 
     @PostMapping

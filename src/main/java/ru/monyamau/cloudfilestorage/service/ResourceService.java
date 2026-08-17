@@ -6,6 +6,8 @@ import ru.monyamau.cloudfilestorage.model.ResourceItem;
 import ru.monyamau.cloudfilestorage.model.ResourceType;
 import ru.monyamau.cloudfilestorage.repository.MinioResourceStorage;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -39,6 +41,25 @@ public class ResourceService {
     }
 
     public ResponseResourceDto convert(ResourceItem item) {
+    public List<ResponseResourceDto> searchResource(String personalDirectory, String query) {
+        List<ResponseResourceDto> result = new ArrayList<>();
+        List<ResourceItem> resources = resourceStorage.findAllByPrefix(personalDirectory);
+        for (ResourceItem resource : resources) {
+            ResponseResourceDto converted = convert(resource);
+            if (matchQueryWithLowerCase(converted.name(), query)) {
+                result.add(converted);
+            }
+        }
+        return result;
+    }
+
+    public void deleteResource(String path) {
+        if (path.endsWith("/")) {
+            resourceStorage.deleteDirectory(path);
+        }
+        resourceStorage.deleteFile(path);
+    }
+
     public List<ResponseResourceDto> findAllFromDirectory(String path) {
         if (!path.endsWith("/")) {
             throw new RuntimeException();
@@ -58,6 +79,12 @@ public class ResourceService {
         resourceStorage.createDirectory(path);
         ResourceItem item = resourceStorage.findDirectory(path).orElseThrow(RuntimeException::new);
         return convert(item);
+    }
+
+    private boolean matchQueryWithLowerCase(String name, String query) {
+        name = name.toLowerCase();
+        query = query.toLowerCase();
+        return name.contains(query);
     }
 
     private ResponseResourceDto convert(ResourceItem item) {
