@@ -39,6 +39,28 @@ public class ResourceService {
     }
 
     public ResponseResourceDto convert(ResourceItem item) {
+    public List<ResponseResourceDto> findAllFromDirectory(String path) {
+        if (!path.endsWith("/")) {
+            throw new RuntimeException();
+        }
+        List<ResponseResourceDto> result = new ArrayList<>();
+        List<ResourceItem> resources = resourceStorage.findAllFromDirectory(path);
+        for (ResourceItem resource : resources) {
+            result.add(convert(resource));
+        }
+        return result;
+    }
+
+    public ResponseResourceDto createDirectory(String path) {
+        if (!path.endsWith("/")) {
+            throw new RuntimeException();
+        }
+        resourceStorage.createDirectory(path);
+        ResourceItem item = resourceStorage.findDirectory(path).orElseThrow(RuntimeException::new);
+        return convert(item);
+    }
+
+    private ResponseResourceDto convert(ResourceItem item) {
         String[] resources = item.objectName().split("/");
         String path = collectPath(resources);
         String name = resources[resources.length - 1];
@@ -48,7 +70,7 @@ public class ResourceService {
         return new ResponseResourceDto(path, name, item.size(), ResourceType.FILE);
     }
 
-    public String collectPath(String[] resources) {
+    private String collectPath(String[] resources) {
         StringBuilder path = new StringBuilder();
         for (int i = 1; i < resources.length - 1; i++) {
             path.append(resources[i]).append("/");

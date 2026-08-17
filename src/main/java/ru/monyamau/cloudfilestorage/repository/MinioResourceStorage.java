@@ -94,6 +94,27 @@ public class MinioResourceStorage {
             for (Result<Item> result : results) {
                 Item item = result.get();
                 itemList.add(new ResourceItem(item.objectName(), item.isDir(), item.size()));
+                itemList.add(convert(item));
+            }
+            return itemList;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<ResourceItem> findAllFromDirectory(String path) {
+        try {
+            List<ResourceItem> itemList = new ArrayList<>();
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(bucketName)
+                            .prefix(path)
+                            .recursive(false)
+                            .build()
+            );
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                itemList.add(convert(item));
             }
             return itemList;
         } catch (Exception e) {
@@ -167,4 +188,8 @@ public class MinioResourceStorage {
     }
 
     //TODO сделать метод на проверку слэша (директории)
+    public ResourceItem convert(Item item) {
+        boolean isDir = item.objectName().endsWith("/");
+        return new ResourceItem(item.objectName(), isDir, isDir ? null : item.size());
+    }
 }
