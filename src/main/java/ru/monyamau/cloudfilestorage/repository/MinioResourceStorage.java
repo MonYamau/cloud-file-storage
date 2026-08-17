@@ -93,7 +93,6 @@ public class MinioResourceStorage {
             );
             for (Result<Item> result : results) {
                 Item item = result.get();
-                itemList.add(new ResourceItem(item.objectName(), item.isDir(), item.size()));
                 itemList.add(convert(item));
             }
             return itemList;
@@ -166,7 +165,6 @@ public class MinioResourceStorage {
     public void deleteDirectory(String objectPath) {
         try {
             List<ResourceItem> result = findAllByPrefix(objectPath);
-            result.forEach(System.out::println);
             List<Object> deletedList = new ArrayList<>();
             for (ResourceItem item : result) {
                 deletedList.add(new Object(item.objectName()));
