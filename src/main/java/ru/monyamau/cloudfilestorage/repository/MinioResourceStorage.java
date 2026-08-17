@@ -185,7 +185,6 @@ public class MinioResourceStorage {
         }
     }
 
-    //TODO сделать метод на проверку слэша (директории)
     public ResourceItem convert(Item item) {
         boolean isDir = item.objectName().endsWith("/");
         return new ResourceItem(item.objectName(), isDir, isDir ? null : item.size());

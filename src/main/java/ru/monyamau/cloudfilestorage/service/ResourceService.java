@@ -40,7 +40,6 @@ public class ResourceService {
         return convert(file);
     }
 
-    public ResponseResourceDto convert(ResourceItem item) {
     public List<ResponseResourceDto> searchResource(String personalDirectory, String query) {
         List<ResponseResourceDto> result = new ArrayList<>();
         List<ResourceItem> resources = resourceStorage.findAllByPrefix(personalDirectory);
