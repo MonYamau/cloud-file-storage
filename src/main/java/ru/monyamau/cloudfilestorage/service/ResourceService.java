@@ -1,14 +1,17 @@
 package ru.monyamau.cloudfilestorage.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
 import ru.monyamau.cloudfilestorage.model.ResourceItem;
 import ru.monyamau.cloudfilestorage.model.ResourceType;
 import ru.monyamau.cloudfilestorage.repository.MinioResourceStorage;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ResourceService {
@@ -57,6 +60,26 @@ public class ResourceService {
             resourceStorage.deleteDirectory(path);
         }
         resourceStorage.deleteFile(path);
+    }
+
+    public ResponseResourceDto uploadFile(String path, MultipartFile file) {
+        if (file.getOriginalFilename().contains("/")) {
+            createSubdirectories(file.getOriginalFilename(), path);
+        }
+        String fullPath = path + file.getOriginalFilename();
+        resourceStorage.upload(fullPath, file);
+        ResourceItem resource = resourceStorage.findFile(fullPath).orElseThrow(RuntimeException::new);
+        return convert(resource);
+    }
+
+    private void createSubdirectories(String originalFilename, String path) {
+        List<String> resources = Arrays.stream(originalFilename.split("/")).collect(Collectors.toList());
+        resources.removeLast();
+        StringBuilder pathBuilder = new StringBuilder(path);
+        for (String resource : resources) {
+            pathBuilder.append(resource).append("/");
+            resourceStorage.createDirectory(pathBuilder.toString());
+        }
     }
 
     public List<ResponseResourceDto> findAllFromDirectory(String path) {

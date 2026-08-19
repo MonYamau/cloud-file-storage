@@ -8,6 +8,7 @@ import io.minio.messages.Item;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
 import ru.monyamau.cloudfilestorage.model.ResourceItem;
 
 import java.io.ByteArrayInputStream;
@@ -73,7 +74,7 @@ public class MinioResourceStorage {
                     PutObjectArgs.builder()
                             .bucket(bucketName)
                             .object(directoryName)
-                            .stream(new ByteArrayInputStream(new byte[] {}), 0L, AUTOMATIC_BUFFER)
+                            .stream(new ByteArrayInputStream(new byte[]{}), 0L, AUTOMATIC_BUFFER)
                             .build()
             );
         } catch (Exception e) {
@@ -121,14 +122,14 @@ public class MinioResourceStorage {
         }
     }
 
-    public void upload(String objectPath, long fileSize, InputStream inputStream, String contentType) {
+    public void upload(String objectPath, MultipartFile file) {
         try {
             minioClient.putObject(
                     PutObjectArgs.builder()
-                            .stream(inputStream, fileSize, AUTOMATIC_BUFFER)
+                            .stream(file.getInputStream(), file.getSize(), AUTOMATIC_BUFFER)
                             .object(objectPath)
                             .bucket(bucketName)
-                            .contentType(contentType)
+                            .contentType(file.getContentType())
                             .build()
             );
         } catch (Exception e) {

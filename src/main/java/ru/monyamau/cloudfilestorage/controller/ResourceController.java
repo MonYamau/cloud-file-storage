@@ -52,7 +52,11 @@ public class ResourceController {
     }
 
     @PostMapping
-    public ResponseEntity<ResponseResourceDto> upload(@RequestParam(name = "path") String path, MultipartFile file) {
-        return new ResponseEntity<>(new ResponseResourceDto("", "", null, ResourceType.FILE), HttpStatus.CREATED);
+    public ResponseEntity<ResponseResourceDto> upload(@RequestParam(name = "path") String path,
+                                                      @RequestParam(name = "file") MultipartFile file,
+                                                      @RequestAttribute(name = "userId") int userId) {
+        String personalDirectory = resourceService.findPersonalDirectory(userId);
+        ResponseResourceDto resourceDto = resourceService.uploadFile(personalDirectory + path, file);
+        return new ResponseEntity<>(resourceDto, HttpStatus.CREATED);
     }
 }
