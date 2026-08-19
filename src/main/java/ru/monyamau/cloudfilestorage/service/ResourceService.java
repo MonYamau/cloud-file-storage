@@ -62,7 +62,7 @@ public class ResourceService {
         resourceStorage.deleteFile(path);
     }
 
-    public ResponseResourceDto uploadFile(String path, MultipartFile file) {
+    public ResponseResourceDto uploadResource(String path, MultipartFile file) {
         if (file.getOriginalFilename().contains("/")) {
             createSubdirectories(file.getOriginalFilename(), path);
         }

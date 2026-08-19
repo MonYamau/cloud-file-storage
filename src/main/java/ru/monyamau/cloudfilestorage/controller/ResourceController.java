@@ -56,7 +56,7 @@ public class ResourceController {
                                                       @RequestParam(name = "file") MultipartFile file,
                                                       @RequestAttribute(name = "userId") int userId) {
         String personalDirectory = resourceService.findPersonalDirectory(userId);
-        ResponseResourceDto resourceDto = resourceService.uploadFile(personalDirectory + path, file);
+        ResponseResourceDto resourceDto = resourceService.uploadResource(personalDirectory + path, file);
         return new ResponseEntity<>(resourceDto, HttpStatus.CREATED);
     }
 }
