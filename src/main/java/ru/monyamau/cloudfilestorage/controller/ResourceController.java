@@ -1,6 +1,8 @@
 package ru.monyamau.cloudfilestorage.controller;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,8 +36,11 @@ public class ResourceController {
     }
 
     @GetMapping("/download")
-    public ResponseEntity<?> download(@RequestParam(name = "path") String path) {
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<byte[]> download(@RequestParam(name = "path") String path, @RequestAttribute(name = "userId") int userId) {
+        String personalDirectory = resourceService.findPersonalDirectory(userId);
+        byte[] bytes = resourceService.downloadResource(personalDirectory + path);
+        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=download.zip").body(bytes);
     }
 
     @PostMapping("/move")

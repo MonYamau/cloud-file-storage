@@ -7,11 +7,15 @@ import ru.monyamau.cloudfilestorage.model.ResourceItem;
 import ru.monyamau.cloudfilestorage.model.ResourceType;
 import ru.monyamau.cloudfilestorage.repository.MinioResourceStorage;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 public class ResourceService {
@@ -55,6 +59,7 @@ public class ResourceService {
         return result;
     }
 
+    //TODO добавить проверку на выполнение удаления
     public void deleteResource(String path) {
         if (path.endsWith("/")) {
             resourceStorage.deleteDirectory(path);
@@ -72,14 +77,21 @@ public class ResourceService {
         return convert(resource);
     }
 
-    private void createSubdirectories(String originalFilename, String path) {
-        List<String> resources = Arrays.stream(originalFilename.split("/")).collect(Collectors.toList());
-        resources.removeLast();
-        StringBuilder pathBuilder = new StringBuilder(path);
-        for (String resource : resources) {
-            pathBuilder.append(resource).append("/");
-            resourceStorage.createDirectory(pathBuilder.toString());
+    public byte[] downloadResource(String path) {
+        List<ResourceItem> resourceItemList = resourceStorage.findAllByPrefix(path);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)){
+            for (ResourceItem resourceItem : resourceItemList) {
+                if (resourceItem.objectName().endsWith("/")) continue;
+                zipOutputStream.putNextEntry(new ZipEntry(resourceItem.objectName().replace(path, "")));
+                InputStream inputStream = resourceStorage.download(resourceItem.objectName());
+                inputStream.transferTo(zipOutputStream);
+                zipOutputStream.closeEntry();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+        return byteArrayOutputStream.toByteArray();
     }
 
     public List<ResponseResourceDto> findAllFromDirectory(String path) {
@@ -101,6 +113,16 @@ public class ResourceService {
         resourceStorage.createDirectory(path);
         ResourceItem item = resourceStorage.findDirectory(path).orElseThrow(RuntimeException::new);
         return convert(item);
+    }
+
+    private void createSubdirectories(String originalFilename, String path) {
+        List<String> resources = Arrays.stream(originalFilename.split("/")).collect(Collectors.toList());
+        resources.removeLast();
+        StringBuilder pathBuilder = new StringBuilder(path);
+        for (String resource : resources) {
+            pathBuilder.append(resource).append("/");
+            resourceStorage.createDirectory(pathBuilder.toString());
+        }
     }
 
     private boolean matchQueryWithLowerCase(String name, String query) {
