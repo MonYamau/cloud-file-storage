@@ -1,4 +1,4 @@
-package ru.monyamau.cloudfilestorage.interceptor;
+package ru.monyamau.cloudfilestorage.handler;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

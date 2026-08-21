@@ -9,7 +9,7 @@ import org.springframework.web.multipart.support.StandardServletMultipartResolve
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import ru.monyamau.cloudfilestorage.interceptor.SessionInterceptor;
+import ru.monyamau.cloudfilestorage.handler.SessionInterceptor;
 
 @Configuration
 @ComponentScan
