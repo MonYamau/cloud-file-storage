@@ -3,6 +3,7 @@ package ru.monyamau.cloudfilestorage.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.monyamau.cloudfilestorage.dto.request.RequestUserDto;
+import ru.monyamau.cloudfilestorage.dto.response.ResponseUserDto;
 import ru.monyamau.cloudfilestorage.entity.User;
 import ru.monyamau.cloudfilestorage.repository.RedisSessionStorage;
 import ru.monyamau.cloudfilestorage.repository.UserRepository;
@@ -39,5 +40,12 @@ public class AuthorizationService {
 
     public void logoutUser(String key) {
         sessionStorage.delete(key);
+    }
+
+    public ResponseUserDto findUser(UUID uuid) {
+        String userId = sessionStorage.findBy(String.valueOf(uuid)).orElseThrow(RuntimeException::new);
+        int id = Integer.parseInt(userId);
+        User user = userRepository.findUserById(id).orElseThrow(RuntimeException::new);
+        return new ResponseUserDto(user.getName());
     }
 }
