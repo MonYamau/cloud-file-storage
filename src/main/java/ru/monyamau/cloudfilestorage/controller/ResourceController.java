@@ -44,9 +44,12 @@ public class ResourceController {
     }
 
     @PostMapping("/move")
-    public ResponseEntity<ResponseResourceDto> move(@RequestParam(name = "from") String from,
-                                                    @RequestParam(name = "to") String to) {
-        return new ResponseEntity<>(new ResponseResourceDto("", "", null, ResourceType.FILE), HttpStatus.OK);
+    public ResponseEntity<ResponseResourceDto> change(@RequestParam(name = "from") String from,
+                                                      @RequestParam(name = "to") String to,
+                                                      @RequestAttribute(name = "userId") int userId) {
+        String personalDirectory = resourceService.findPersonalDirectory(userId);
+        ResponseResourceDto resourceDto = resourceService.changeResource(personalDirectory + from, personalDirectory + to);
+        return new ResponseEntity<>(resourceDto, HttpStatus.OK);
     }
 
     @GetMapping("/search")

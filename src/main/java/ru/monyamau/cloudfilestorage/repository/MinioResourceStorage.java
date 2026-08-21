@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-//TODO exceptions
 @Repository
 public class MinioResourceStorage {
     private static final long AUTOMATIC_BUFFER = -1;
@@ -117,6 +116,26 @@ public class MinioResourceStorage {
                 itemList.add(convert(item));
             }
             return itemList;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String copy(String oldPath, String newPath) {
+        try {
+            ObjectWriteResponse objectWriteResponse = minioClient.copyObject(
+                    CopyObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(newPath)
+                            .source(
+                                    SourceObject.builder()
+                                            .bucket(bucketName)
+                                            .object(oldPath)
+                                            .build()
+                            )
+                            .build()
+            );
+            return objectWriteResponse.object();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

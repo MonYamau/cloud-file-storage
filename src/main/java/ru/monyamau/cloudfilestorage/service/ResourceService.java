@@ -94,6 +94,33 @@ public class ResourceService {
         return byteArrayOutputStream.toByteArray();
     }
 
+    public ResponseResourceDto changeResource(String oldName, String newName) {
+        if (oldName.endsWith("/") && newName.endsWith("/")) {
+            ResourceItem resourceItem = changeDirectory(oldName, newName);
+            return convert(resourceItem);
+        }
+        ResourceItem resourceItem = changeFile(oldName, newName);
+        return convert(resourceItem);
+    }
+
+    private ResourceItem changeFile(String oldName, String newName) {
+        String copy = resourceStorage.copy(oldName, newName);
+        ResourceItem resourceItem = resourceStorage.findFile(copy).orElseThrow(RuntimeException::new);
+        resourceStorage.deleteFile(oldName);
+        return resourceItem;
+    }
+
+    private ResourceItem changeDirectory(String oldPath, String newPath) {
+        List<ResourceItem> resourceItemList = resourceStorage.findAllByPrefix(oldPath);
+        for (ResourceItem resourceItem : resourceItemList) {
+            String oldObjectPath = resourceItem.objectName();
+            String newObjectPath = oldObjectPath.replace(oldPath, newPath);
+            resourceStorage.copy(oldObjectPath, newObjectPath);
+        }
+        resourceStorage.deleteDirectory(oldPath);
+        return resourceStorage.findDirectory(newPath).orElseThrow(RuntimeException::new);
+    }
+
     public List<ResponseResourceDto> findAllFromDirectory(String path) {
         if (!path.endsWith("/")) {
             throw new RuntimeException();
