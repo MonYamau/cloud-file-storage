@@ -59,7 +59,6 @@ public class ResourceService {
         return result;
     }
 
-    //TODO добавить проверку на выполнение удаления
     public void deleteResource(String path) {
         if (path.endsWith("/")) {
             resourceStorage.deleteDirectory(path);
@@ -80,7 +79,7 @@ public class ResourceService {
     public byte[] downloadResource(String path) {
         List<ResourceItem> resourceItemList = resourceStorage.findAllByPrefix(path);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)){
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
             for (ResourceItem resourceItem : resourceItemList) {
                 if (resourceItem.objectName().endsWith("/")) continue;
                 zipOutputStream.putNextEntry(new ZipEntry(resourceItem.objectName().replace(path, "")));

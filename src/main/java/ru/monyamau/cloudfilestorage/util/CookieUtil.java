@@ -30,7 +30,6 @@ public final class CookieUtil {
                 .build();
     }
 
-    //TODO (exception)
     public static Optional<Cookie> findSessionId(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         Cookie result = null;

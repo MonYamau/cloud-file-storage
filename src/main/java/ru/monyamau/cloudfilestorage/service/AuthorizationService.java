@@ -10,7 +10,6 @@ import ru.monyamau.cloudfilestorage.util.PassHashUtil;
 
 import java.util.UUID;
 
-//TODO(шифрование пароля)
 @Service
 public class AuthorizationService {
     private final UserRepository userRepository;
@@ -29,7 +28,6 @@ public class AuthorizationService {
         return savedUser.getName();
     }
 
-    //TODO (exceptions)
     public String authorizeUser(UUID uuid, RequestUserDto userDto, int ttlMin) {
         User user = userRepository.getUserByName(userDto.username()).orElseThrow(() -> new RuntimeException("UncorrectedName"));
         if (!user.getName().equals(userDto.username()) && !PassHashUtil.check(userDto.password(), user.getPassword())) {
