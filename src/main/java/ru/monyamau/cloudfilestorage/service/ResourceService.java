@@ -72,8 +72,8 @@ public class ResourceService {
             createSubdirectories(file.getOriginalFilename(), path);
         }
         String fullPath = path + file.getOriginalFilename();
-        resourceStorage.upload(fullPath, file);
-        ResourceItem resource = resourceStorage.findFile(fullPath).orElseThrow(RuntimeException::new);
+        String resourcePath = resourceStorage.upload(fullPath, file);
+        ResourceItem resource = resourceStorage.findFile(resourcePath).orElseThrow(RuntimeException::new);
         return convert(resource);
     }
 

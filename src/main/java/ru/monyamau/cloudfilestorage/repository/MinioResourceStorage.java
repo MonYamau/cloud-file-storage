@@ -122,9 +122,9 @@ public class MinioResourceStorage {
         }
     }
 
-    public void upload(String objectPath, MultipartFile file) {
+    public String upload(String objectPath, MultipartFile file) {
         try {
-            minioClient.putObject(
+            ObjectWriteResponse objectWriteResponse = minioClient.putObject(
                     PutObjectArgs.builder()
                             .stream(file.getInputStream(), file.getSize(), AUTOMATIC_BUFFER)
                             .object(objectPath)
@@ -132,6 +132,7 @@ public class MinioResourceStorage {
                             .contentType(file.getContentType())
                             .build()
             );
+            return objectWriteResponse.object();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
