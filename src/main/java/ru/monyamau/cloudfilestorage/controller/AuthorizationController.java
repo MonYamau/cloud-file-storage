@@ -32,23 +32,23 @@ public class AuthorizationController {
     @PostMapping("/sign-up")
     public ResponseEntity<ResponseUserDto> signUp(@RequestBody RequestUserDto requestDto) {
         UUID uuid = UUID.randomUUID();
-        String username = authService.registerUser(uuid, requestDto, TTL_MINUTES);
+        ResponseUserDto userDto = authService.registerUser(uuid, requestDto, TTL_MINUTES);
         ResponseCookie cookie = CookieUtil.create(String.valueOf(uuid));
         return ResponseEntity
                 .status(HttpStatus.CREATED).
                 header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(new ResponseUserDto(username));
+                .body(userDto);
     }
 
     @PostMapping("/sign-in")
     public ResponseEntity<ResponseUserDto> signIn(@RequestBody RequestUserDto requestDto) {
         UUID uuid = UUID.randomUUID();
-        String username = authService.authorizeUser(uuid, requestDto, TTL_MINUTES);
+        ResponseUserDto userDto = authService.authorizeUser(uuid, requestDto, TTL_MINUTES);
         ResponseCookie cookie = CookieUtil.create(String.valueOf(uuid));
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(new ResponseUserDto(username));
+                .body(userDto);
     }
 
     @PostMapping("/sign-out")
