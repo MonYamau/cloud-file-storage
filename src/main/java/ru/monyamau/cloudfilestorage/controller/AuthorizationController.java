@@ -19,7 +19,7 @@ import ru.monyamau.cloudfilestorage.util.CookieUtil;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class AuthorizationController {
     private final static int TTL_MINUTES = 30;
     private final AuthorizationService authService;

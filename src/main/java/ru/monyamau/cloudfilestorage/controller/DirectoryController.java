@@ -9,7 +9,7 @@ import ru.monyamau.cloudfilestorage.service.ResourceService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/directory")
+@RequestMapping("/directory")
 public class DirectoryController {
     private final ResourceService resourceService;
 

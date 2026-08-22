@@ -12,7 +12,7 @@ import ru.monyamau.cloudfilestorage.service.ResourceService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/resource")
+@RequestMapping("/resource")
 public class ResourceController {
     private final ResourceService resourceService;
 

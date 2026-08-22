@@ -15,7 +15,7 @@ import ru.monyamau.cloudfilestorage.util.CookieUtil;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/user")
 public class UserController {
     private final AuthorizationService authorizationService;
 
