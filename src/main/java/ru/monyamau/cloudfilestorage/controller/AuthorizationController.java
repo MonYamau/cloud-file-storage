@@ -2,6 +2,7 @@ package ru.monyamau.cloudfilestorage.controller;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,7 +31,7 @@ public class AuthorizationController {
     }
 
     @PostMapping("/sign-up")
-    public ResponseEntity<ResponseUserDto> signUp(@RequestBody RequestUserDto requestDto) {
+    public ResponseEntity<ResponseUserDto> signUp(@Valid @RequestBody RequestUserDto requestDto) {
         UUID uuid = UUID.randomUUID();
         ResponseUserDto userDto = authService.registerUser(uuid, requestDto, TTL_MINUTES);
         ResponseCookie cookie = CookieUtil.create(String.valueOf(uuid), TTL_MINUTES);
@@ -41,7 +42,7 @@ public class AuthorizationController {
     }
 
     @PostMapping("/sign-in")
-    public ResponseEntity<ResponseUserDto> signIn(@RequestBody RequestUserDto requestDto) {
+    public ResponseEntity<ResponseUserDto> signIn(@Valid @RequestBody RequestUserDto requestDto) {
         UUID uuid = UUID.randomUUID();
         ResponseUserDto userDto = authService.authorizeUser(uuid, requestDto, TTL_MINUTES);
         ResponseCookie cookie = CookieUtil.create(String.valueOf(uuid), TTL_MINUTES);
