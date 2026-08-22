@@ -1,8 +1,10 @@
 package ru.monyamau.cloudfilestorage.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.monyamau.cloudfilestorage.dto.request.RequestDirectoryPathDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
 import ru.monyamau.cloudfilestorage.service.ResourceService;
 
@@ -18,16 +20,20 @@ public class DirectoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ResponseResourceDto>> showAbout(@RequestParam(name = "path") String path, @RequestAttribute(name = "userId") int userId) {
+    public ResponseEntity<List<ResponseResourceDto>> showAbout(
+            @Valid @RequestParam(name = "path") RequestDirectoryPathDto pathDto,
+            @RequestAttribute(name = "userId") int userId) {
         String personalDirectory = resourceService.findPersonalDirectory(userId);
-        List<ResponseResourceDto> resourceDtoList = resourceService.findAllFromDirectory(personalDirectory + path);
+        List<ResponseResourceDto> resourceDtoList = resourceService.findAllFromDirectory(personalDirectory + pathDto.path());
         return new ResponseEntity<>(resourceDtoList, HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<ResponseResourceDto> create(@RequestParam(name = "path") String path, @RequestAttribute(name = "userId") int userId) {
+    public ResponseEntity<ResponseResourceDto> create(
+            @Valid @RequestParam(name = "path") RequestDirectoryPathDto pathDto,
+            @RequestAttribute(name = "userId") int userId) {
         String personalDirectory = resourceService.findPersonalDirectory(userId);
-        ResponseResourceDto resourceDto = resourceService.createDirectory(personalDirectory + path);
+        ResponseResourceDto resourceDto = resourceService.createDirectory(personalDirectory + pathDto.path());
         return new ResponseEntity<>(resourceDto, HttpStatus.CREATED);
     }
 }
