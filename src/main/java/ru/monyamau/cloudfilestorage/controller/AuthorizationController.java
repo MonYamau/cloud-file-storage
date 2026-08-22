@@ -33,7 +33,7 @@ public class AuthorizationController {
     public ResponseEntity<ResponseUserDto> signUp(@RequestBody RequestUserDto requestDto) {
         UUID uuid = UUID.randomUUID();
         ResponseUserDto userDto = authService.registerUser(uuid, requestDto, TTL_MINUTES);
-        ResponseCookie cookie = CookieUtil.create(String.valueOf(uuid));
+        ResponseCookie cookie = CookieUtil.create(String.valueOf(uuid), TTL_MINUTES);
         return ResponseEntity
                 .status(HttpStatus.CREATED).
                 header(HttpHeaders.SET_COOKIE, cookie.toString())
@@ -44,7 +44,7 @@ public class AuthorizationController {
     public ResponseEntity<ResponseUserDto> signIn(@RequestBody RequestUserDto requestDto) {
         UUID uuid = UUID.randomUUID();
         ResponseUserDto userDto = authService.authorizeUser(uuid, requestDto, TTL_MINUTES);
-        ResponseCookie cookie = CookieUtil.create(String.valueOf(uuid));
+        ResponseCookie cookie = CookieUtil.create(String.valueOf(uuid), TTL_MINUTES);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
@@ -53,7 +53,8 @@ public class AuthorizationController {
 
     @PostMapping("/sign-out")
     public ResponseEntity<HttpStatus> signOut(HttpServletRequest request) {
-        Cookie cookie = CookieUtil.findSessionId(request).orElseThrow(RuntimeException::new);
+        Cookie[] cookies = request.getCookies();
+        Cookie cookie = CookieUtil.findSessionId(cookies).orElseThrow(RuntimeException::new);
         authService.logoutUser(cookie.getValue());
         ResponseCookie deletedCookie = CookieUtil.delete();
         return ResponseEntity

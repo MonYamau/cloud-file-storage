@@ -26,7 +26,8 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<ResponseUserDto> showCurrentUser(HttpServletRequest request) {
-        Cookie cookie = CookieUtil.findSessionId(request).orElseThrow(RuntimeException::new);
+        Cookie[] cookies = request.getCookies();
+        Cookie cookie = CookieUtil.findSessionId(cookies).orElseThrow(RuntimeException::new);
         ResponseUserDto userDto = authorizationService.findUser(UUID.fromString(cookie.getValue()));
         return new ResponseEntity<>(userDto, HttpStatus.OK);
     }

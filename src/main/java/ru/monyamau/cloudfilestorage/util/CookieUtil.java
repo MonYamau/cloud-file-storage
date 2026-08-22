@@ -1,7 +1,6 @@
 package ru.monyamau.cloudfilestorage.util;
 
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.experimental.UtilityClass;
 import org.springframework.http.ResponseCookie;
 
@@ -10,14 +9,14 @@ import java.util.Optional;
 
 @UtilityClass
 public final class CookieUtil {
-    private final static int TTL_SECONDS = (60 * 30);
+    private final static int TTL_SECONDS = 60;
     private final static String COOKIE_NAME = "SESSION_ID";
     private final static String PATH = "/";
 
-    public static ResponseCookie create(String value) {
+    public static ResponseCookie create(String value, int ttlMin) {
         return ResponseCookie
                 .from(COOKIE_NAME, String.valueOf(value))
-                .maxAge(Duration.ofSeconds(TTL_SECONDS))
+                .maxAge(Duration.ofSeconds(TTL_SECONDS * ttlMin))
                 .path(PATH)
                 .build();
     }
@@ -30,8 +29,7 @@ public final class CookieUtil {
                 .build();
     }
 
-    public static Optional<Cookie> findSessionId(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
+    public static Optional<Cookie> findSessionId(Cookie[] cookies) {
         Cookie result = null;
         if (cookies != null) {
             for (Cookie cookie : cookies) {
