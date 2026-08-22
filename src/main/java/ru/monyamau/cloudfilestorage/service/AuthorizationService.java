@@ -31,11 +31,11 @@ public class AuthorizationService {
 
     public ResponseUserDto authorizeUser(UUID uuid, RequestUserDto userDto, int ttlMin) {
         User user = userRepository.getUserByName(userDto.username()).orElseThrow(() -> new RuntimeException("UncorrectedName"));
-        if (!user.getName().equals(userDto.username()) && !PassHashUtil.check(userDto.password(), user.getPassword())) {
-            throw new RuntimeException("UncorrectedPassword");
+        if (user.getName().equals(userDto.username()) && PassHashUtil.check(userDto.password(), user.getPassword())) {
+            sessionStorage.save(String.valueOf(uuid), String.valueOf(user.getId()), ttlMin);
+            return new ResponseUserDto(user.getName());
         }
-        sessionStorage.save(String.valueOf(uuid), String.valueOf(user.getId()), ttlMin);
-        return new ResponseUserDto(user.getName());
+        throw new RuntimeException("UncorrectedPassword");
     }
 
     public void logoutUser(String key) {
