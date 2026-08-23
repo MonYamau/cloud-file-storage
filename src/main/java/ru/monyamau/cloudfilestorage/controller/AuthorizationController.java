@@ -23,6 +23,7 @@ import java.util.UUID;
 @RequestMapping("/auth")
 public class AuthorizationController {
     private final static int TTL_MINUTES = 30;
+
     private final AuthorizationService authService;
 
     @Autowired
