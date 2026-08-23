@@ -20,20 +20,14 @@ public class DirectoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ResponseResourceDto>> showAbout(
-            @Valid @ModelAttribute(name = "path") RequestDirectoryPathDto pathDto,
-            @RequestAttribute(name = "userId") int userId) {
-        String personalDirectory = resourceService.findPersonalDirectory(userId);
-        List<ResponseResourceDto> resourceDtoList = resourceService.findAllFromDirectory(personalDirectory + pathDto.path());
+    public ResponseEntity<List<ResponseResourceDto>> showAbout(@Valid @ModelAttribute(name = "path") RequestDirectoryPathDto pathDto) {
+        List<ResponseResourceDto> resourceDtoList = resourceService.findAllFromDirectory(pathDto.path());
         return new ResponseEntity<>(resourceDtoList, HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<ResponseResourceDto> create(
-            @Valid @ModelAttribute(name = "path") RequestDirectoryPathDto pathDto,
-            @RequestAttribute(name = "userId") int userId) {
-        String personalDirectory = resourceService.findPersonalDirectory(userId);
-        ResponseResourceDto resourceDto = resourceService.createDirectory(personalDirectory + pathDto.path());
+    public ResponseEntity<ResponseResourceDto> create(@Valid @ModelAttribute(name = "path") RequestDirectoryPathDto pathDto) {
+        ResponseResourceDto resourceDto = resourceService.createDirectory(pathDto.path());
         return new ResponseEntity<>(resourceDto, HttpStatus.CREATED);
     }
 }

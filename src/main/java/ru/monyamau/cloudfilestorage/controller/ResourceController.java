@@ -23,50 +23,41 @@ public class ResourceController {
     }
 
     @GetMapping
-    public ResponseEntity<ResponseResourceDto> showAbout(@Valid @ModelAttribute(name = "path") RequestResourcePathDto pathDto, @RequestAttribute(name = "userId") int userId) {
-        String personalDirectory = resourceService.findPersonalDirectory(userId);
-        ResponseResourceDto resourceDto = resourceService.findResource(personalDirectory + pathDto.path());
+    public ResponseEntity<ResponseResourceDto> showAbout(@Valid @ModelAttribute(name = "path") RequestResourcePathDto pathDto) {
+        ResponseResourceDto resourceDto = resourceService.findResource(pathDto.path());
         return new ResponseEntity<>(resourceDto, HttpStatus.OK);
     }
 
     @DeleteMapping
-    public ResponseEntity<HttpStatus> delete(@Valid @ModelAttribute(name = "path") RequestResourcePathDto pathDto, @RequestAttribute(name = "userId") int userId) {
-        String personalDirectory = resourceService.findPersonalDirectory(userId);
-        resourceService.deleteResource(personalDirectory + pathDto.path());
+    public ResponseEntity<HttpStatus> delete(@Valid @ModelAttribute(name = "path") RequestResourcePathDto pathDto) {
+        resourceService.deleteResource(pathDto.path());
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping("/download")
-    public ResponseEntity<byte[]> download(@Valid @ModelAttribute(name = "path") RequestResourcePathDto pathDto, @RequestAttribute(name = "userId") int userId) {
-        String personalDirectory = resourceService.findPersonalDirectory(userId);
-        byte[] bytes = resourceService.downloadResource(personalDirectory + pathDto.path());
+    public ResponseEntity<byte[]> download(@Valid @ModelAttribute(name = "path") RequestResourcePathDto pathDto) {
+        byte[] bytes = resourceService.downloadResource(pathDto.path());
         return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=download.zip").body(bytes);
     }
 
     @PostMapping("/move")
     public ResponseEntity<ResponseResourceDto> change(@Valid @ModelAttribute(name = "from") RequestResourcePathDto fromPathDto,
-                                                      @Valid @ModelAttribute(name = "to") RequestResourcePathDto toPathDto,
-                                                      @RequestAttribute(name = "userId") int userId) {
-        String personalDirectory = resourceService.findPersonalDirectory(userId);
-        ResponseResourceDto resourceDto = resourceService.changeResource(
-                personalDirectory + fromPathDto.path(), personalDirectory + toPathDto.path());
+                                                      @Valid @ModelAttribute(name = "to") RequestResourcePathDto toPathDto) {
+        ResponseResourceDto resourceDto = resourceService.changeResource(fromPathDto.path(), toPathDto.path());
         return new ResponseEntity<>(resourceDto, HttpStatus.OK);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ResponseResourceDto>> search(@RequestParam(name = "query") String query, @RequestAttribute(name = "userId") int userId) {
-        String personalDirectory = resourceService.findPersonalDirectory(userId);
-        List<ResponseResourceDto> resourceDtoList = resourceService.searchResource(personalDirectory, query);
+    public ResponseEntity<List<ResponseResourceDto>> search(@RequestParam(name = "query") String query) {
+        List<ResponseResourceDto> resourceDtoList = resourceService.searchResource(query);
         return new ResponseEntity<>(resourceDtoList, HttpStatus.OK);
     }
 
     @PostMapping
     public ResponseEntity<ResponseResourceDto> upload(@Valid @ModelAttribute(name = "path") RequestResourcePathDto pathDto,
-                                                      @RequestParam(name = "file") MultipartFile file,
-                                                      @RequestAttribute(name = "userId") int userId) {
-        String personalDirectory = resourceService.findPersonalDirectory(userId);
-        ResponseResourceDto resourceDto = resourceService.uploadResource(personalDirectory + pathDto.path(), file);
+                                                      @RequestParam(name = "file") MultipartFile file) {
+        ResponseResourceDto resourceDto = resourceService.uploadResource(pathDto.path(), file);
         return new ResponseEntity<>(resourceDto, HttpStatus.CREATED);
     }
 }

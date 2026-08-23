@@ -15,16 +15,19 @@ import java.util.UUID;
 public class AuthorizationService {
     private final UserRepository userRepository;
     private final RedisSessionStorage sessionStorage;
+    private final ResourceService resourceService;
 
     @Autowired
-    public AuthorizationService(UserRepository userRepository, RedisSessionStorage sessionStorage) {
+    public AuthorizationService(UserRepository userRepository, RedisSessionStorage sessionStorage, ResourceService resourceService) {
         this.userRepository = userRepository;
         this.sessionStorage = sessionStorage;
+        this.resourceService = resourceService;
     }
 
     public ResponseUserDto registerUser(UUID uuid, RequestUserDto userDto, int ttlMin) {
         String hash = PassHashUtil.hash(userDto.password());
         User savedUser = userRepository.saveAndFlush(new User(userDto.username(), hash));
+        resourceService.createPersonalDirectory(savedUser.getId());
         sessionStorage.save(String.valueOf(uuid), String.valueOf(savedUser.getId()), ttlMin);
         return new ResponseUserDto(savedUser.getName());
     }
