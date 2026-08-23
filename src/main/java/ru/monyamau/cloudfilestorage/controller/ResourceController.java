@@ -23,21 +23,21 @@ public class ResourceController {
     }
 
     @GetMapping
-    public ResponseEntity<ResponseResourceDto> showAbout(@Valid @RequestParam(name = "path") RequestResourcePathDto pathDto, @RequestAttribute(name = "userId") int userId) {
+    public ResponseEntity<ResponseResourceDto> showAbout(@Valid @ModelAttribute(name = "path") RequestResourcePathDto pathDto, @RequestAttribute(name = "userId") int userId) {
         String personalDirectory = resourceService.findPersonalDirectory(userId);
         ResponseResourceDto resourceDto = resourceService.findResource(personalDirectory + pathDto.path());
         return new ResponseEntity<>(resourceDto, HttpStatus.OK);
     }
 
     @DeleteMapping
-    public ResponseEntity<HttpStatus> delete(@Valid @RequestParam(name = "path") RequestResourcePathDto pathDto, @RequestAttribute(name = "userId") int userId) {
+    public ResponseEntity<HttpStatus> delete(@Valid @ModelAttribute(name = "path") RequestResourcePathDto pathDto, @RequestAttribute(name = "userId") int userId) {
         String personalDirectory = resourceService.findPersonalDirectory(userId);
         resourceService.deleteResource(personalDirectory + pathDto.path());
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping("/download")
-    public ResponseEntity<byte[]> download(@Valid @RequestParam(name = "path") RequestResourcePathDto pathDto, @RequestAttribute(name = "userId") int userId) {
+    public ResponseEntity<byte[]> download(@Valid @ModelAttribute(name = "path") RequestResourcePathDto pathDto, @RequestAttribute(name = "userId") int userId) {
         String personalDirectory = resourceService.findPersonalDirectory(userId);
         byte[] bytes = resourceService.downloadResource(personalDirectory + pathDto.path());
         return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -45,8 +45,8 @@ public class ResourceController {
     }
 
     @PostMapping("/move")
-    public ResponseEntity<ResponseResourceDto> change(@Valid @RequestParam(name = "from") RequestResourcePathDto fromPathDto,
-                                                      @Valid @RequestParam(name = "to") RequestResourcePathDto toPathDto,
+    public ResponseEntity<ResponseResourceDto> change(@Valid @ModelAttribute(name = "from") RequestResourcePathDto fromPathDto,
+                                                      @Valid @ModelAttribute(name = "to") RequestResourcePathDto toPathDto,
                                                       @RequestAttribute(name = "userId") int userId) {
         String personalDirectory = resourceService.findPersonalDirectory(userId);
         ResponseResourceDto resourceDto = resourceService.changeResource(
@@ -62,7 +62,7 @@ public class ResourceController {
     }
 
     @PostMapping
-    public ResponseEntity<ResponseResourceDto> upload(@Valid @RequestParam(name = "path") RequestResourcePathDto pathDto,
+    public ResponseEntity<ResponseResourceDto> upload(@Valid @ModelAttribute(name = "path") RequestResourcePathDto pathDto,
                                                       @RequestParam(name = "file") MultipartFile file,
                                                       @RequestAttribute(name = "userId") int userId) {
         String personalDirectory = resourceService.findPersonalDirectory(userId);

@@ -21,7 +21,7 @@ public class DirectoryController {
 
     @GetMapping
     public ResponseEntity<List<ResponseResourceDto>> showAbout(
-            @Valid @RequestParam(name = "path") RequestDirectoryPathDto pathDto,
+            @Valid @ModelAttribute(name = "path") RequestDirectoryPathDto pathDto,
             @RequestAttribute(name = "userId") int userId) {
         String personalDirectory = resourceService.findPersonalDirectory(userId);
         List<ResponseResourceDto> resourceDtoList = resourceService.findAllFromDirectory(personalDirectory + pathDto.path());
@@ -30,7 +30,7 @@ public class DirectoryController {
 
     @PostMapping
     public ResponseEntity<ResponseResourceDto> create(
-            @Valid @RequestParam(name = "path") RequestDirectoryPathDto pathDto,
+            @Valid @ModelAttribute(name = "path") RequestDirectoryPathDto pathDto,
             @RequestAttribute(name = "userId") int userId) {
         String personalDirectory = resourceService.findPersonalDirectory(userId);
         ResponseResourceDto resourceDto = resourceService.createDirectory(personalDirectory + pathDto.path());
