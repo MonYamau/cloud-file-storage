@@ -2,6 +2,9 @@ package ru.monyamau.cloudfilestorage.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import ru.monyamau.cloudfilestorage.dto.request.RequestDirectoryDto;
+import ru.monyamau.cloudfilestorage.dto.request.RequestQueryDto;
+import ru.monyamau.cloudfilestorage.dto.request.RequestResourceDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
 import ru.monyamau.cloudfilestorage.model.ResourceItem;
 import ru.monyamau.cloudfilestorage.model.ResourceType;
@@ -38,8 +41,8 @@ public class ResourceService {
         }
     }
 
-    public ResponseResourceDto findResource(String path) {
-        String fullPath = formatPersonalPath(path);
+    public ResponseResourceDto findResource(RequestResourceDto resourceDto) {
+        String fullPath = formatPersonalPath(resourceDto.path());
         if (isDirectory(fullPath)) {
             ResourceItem directory = resourceStorage.findDirectory(fullPath).orElseThrow(RuntimeException::new);
             return convert(directory);
@@ -48,7 +51,7 @@ public class ResourceService {
         return convert(file);
     }
 
-    public List<ResponseResourceDto> searchResource(String query) {
+    public List<ResponseResourceDto> searchResource(RequestQueryDto queryDto) {
         String personalDirectory = PERSONAL_DIRECTORY_NAME.formatted(userContext.getUserId());
         String personalDirectoryName = personalDirectory.replace("/", "");
         List<ResponseResourceDto> result = new ArrayList<>();
@@ -56,23 +59,23 @@ public class ResourceService {
         for (ResourceItem resource : resources) {
             ResponseResourceDto converted = convert(resource);
             if (personalDirectoryName.equals(converted.name())) continue;
-            if (matchQueryWithLowerCase(converted.name(), query)) {
+            if (matchQueryWithLowerCase(converted.name(), queryDto.query())) {
                 result.add(converted);
             }
         }
         return result;
     }
 
-    public void deleteResource(String path) {
-        String fullPath = formatPersonalPath(path);
+    public void deleteResource(RequestResourceDto resourceDto) {
+        String fullPath = formatPersonalPath(resourceDto.path());
         if (isDirectory(fullPath)) {
             resourceStorage.deleteDirectory(fullPath);
         }
         resourceStorage.deleteFile(fullPath);
     }
 
-    public ResponseResourceDto uploadResource(String path, MultipartFile file) {
-        String fullPath = formatPersonalPath(path);
+    public ResponseResourceDto uploadResource(RequestResourceDto resourceDto, MultipartFile file) {
+        String fullPath = formatPersonalPath(resourceDto.path());
         if (file.getOriginalFilename().contains("/")) {
             createSubdirectories(file.getOriginalFilename(), fullPath);
         }
@@ -82,8 +85,8 @@ public class ResourceService {
         return convert(resource);
     }
 
-    public byte[] downloadResource(String path) {
-        String fullPath = formatPersonalPath(path);
+    public byte[] downloadResource(RequestResourceDto resourceDto) {
+        String fullPath = formatPersonalPath(resourceDto.path());
         List<ResourceItem> resourceItemList = resourceStorage.findAllByPrefix(fullPath);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
@@ -112,11 +115,8 @@ public class ResourceService {
         return convert(resourceItem);
     }
 
-    public List<ResponseResourceDto> findAllFromDirectory(String path) {
-        String fullPath = formatPersonalPath(path);
-        if (!isDirectory(fullPath)) {
-            throw new RuntimeException();
-        }
+    public List<ResponseResourceDto> findAllFromDirectory(RequestDirectoryDto directoryDto) {
+        String fullPath = formatPersonalPath(directoryDto.path());
         List<ResponseResourceDto> result = new ArrayList<>();
         List<ResourceItem> resources = resourceStorage.findAllFromDirectory(fullPath);
         for (ResourceItem resource : resources) {
@@ -125,11 +125,8 @@ public class ResourceService {
         return result;
     }
 
-    public ResponseResourceDto createDirectory(String path) {
-        String fullPath = formatPersonalPath(path);
-        if (!isDirectory(fullPath)) {
-            throw new RuntimeException();
-        }
+    public ResponseResourceDto createDirectory(RequestDirectoryDto directoryDto) {
+        String fullPath = formatPersonalPath(directoryDto.path());
         resourceStorage.createDirectory(fullPath);
         ResourceItem item = resourceStorage.findDirectory(fullPath).orElseThrow(RuntimeException::new);
         return convert(item);
