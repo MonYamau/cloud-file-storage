@@ -5,10 +5,12 @@ import org.springframework.stereotype.Service;
 import ru.monyamau.cloudfilestorage.dto.request.RequestUserDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseUserDto;
 import ru.monyamau.cloudfilestorage.entity.User;
+import ru.monyamau.cloudfilestorage.exception.AuthenticationException;
 import ru.monyamau.cloudfilestorage.repository.RedisSessionStorage;
 import ru.monyamau.cloudfilestorage.repository.UserRepository;
 import ru.monyamau.cloudfilestorage.util.PassHashUtil;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -28,17 +30,24 @@ public class AuthorizationService {
         String hash = PassHashUtil.hash(userDto.password());
         User savedUser = userRepository.saveAndFlush(new User(userDto.username(), hash));
         resourceService.createPersonalDirectory(savedUser.getId());
-        sessionStorage.save(String.valueOf(uuid), String.valueOf(savedUser.getId()), ttlMin);
+        String key = String.valueOf(uuid);
+        String value = String.valueOf(savedUser.getId());
+        sessionStorage.save(key, value, ttlMin);
         return new ResponseUserDto(savedUser.getName());
     }
 
     public ResponseUserDto authorizeUser(UUID uuid, RequestUserDto userDto, int ttlMin) {
-        User user = userRepository.getUserByName(userDto.username()).orElseThrow(() -> new RuntimeException("UncorrectedName"));
-        if (user.getName().equals(userDto.username()) && PassHashUtil.check(userDto.password(), user.getPassword())) {
-            sessionStorage.save(String.valueOf(uuid), String.valueOf(user.getId()), ttlMin);
-            return new ResponseUserDto(user.getName());
+        Optional<User> user = userRepository.getUserByName(userDto.username());
+        if (user.isPresent()) {
+            User currentUser = user.get();
+            if (PassHashUtil.check(userDto.password(), currentUser.getPassword())) {
+                String key = String.valueOf(uuid);
+                String value = String.valueOf(currentUser.getId());
+                sessionStorage.save(key, value, ttlMin);
+                return new ResponseUserDto(currentUser.getName());
+            }
         }
-        throw new RuntimeException("UncorrectedPassword");
+        throw new AuthenticationException("Ошибка аутентификации: неверное имя пользователя или пароль");
     }
 
     public void logoutUser(String key) {
@@ -46,9 +55,11 @@ public class AuthorizationService {
     }
 
     public ResponseUserDto findUser(UUID uuid) {
-        String userId = sessionStorage.findBy(String.valueOf(uuid)).orElseThrow(RuntimeException::new);
+        String userId = sessionStorage.findBy(String.valueOf(uuid))
+                .orElseThrow(() -> new AuthenticationException("Ошибка аутентификации: не удалось найти актуальную сессию"));
         int id = Integer.parseInt(userId);
-        User user = userRepository.findUserById(id).orElseThrow(RuntimeException::new);
+        User user = userRepository.findUserById(id)
+                .orElseThrow(() -> new IllegalStateException("Ошибка на стороне сервера: не удалось найти пользователя"));
         return new ResponseUserDto(user.getName());
     }
 }

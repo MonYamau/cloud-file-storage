@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.monyamau.cloudfilestorage.dto.request.RequestUserDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseUserDto;
+import ru.monyamau.cloudfilestorage.exception.AuthenticationException;
 import ru.monyamau.cloudfilestorage.service.AuthorizationService;
 import ru.monyamau.cloudfilestorage.util.CookieUtil;
 
@@ -56,7 +57,8 @@ public class AuthorizationController {
     @PostMapping("/sign-out")
     public ResponseEntity<HttpStatus> signOut(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
-        Cookie cookie = CookieUtil.findSessionId(cookies).orElseThrow(RuntimeException::new);
+        Cookie cookie = CookieUtil.findSessionId(cookies)
+                .orElseThrow(() -> new AuthenticationException("Ошибка аутентификации: не выполнен вход пользователем"));
         authService.logoutUser(cookie.getValue());
         ResponseCookie deletedCookie = CookieUtil.delete();
         return ResponseEntity
