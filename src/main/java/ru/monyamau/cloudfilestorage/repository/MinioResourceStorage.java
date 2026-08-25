@@ -59,7 +59,8 @@ public class MinioResourceStorage {
                             .build()
             );
             if (results.iterator().hasNext()) {
-                return Optional.of(new ResourceItem(objectPath, true, null));
+                Item item = results.iterator().next().get();
+                return Optional.of(convert(item));
             }
             return Optional.empty();
         } catch (Exception e) {
