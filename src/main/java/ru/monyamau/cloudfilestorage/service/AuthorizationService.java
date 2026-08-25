@@ -6,6 +6,7 @@ import ru.monyamau.cloudfilestorage.dto.request.RequestUserDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseUserDto;
 import ru.monyamau.cloudfilestorage.entity.User;
 import ru.monyamau.cloudfilestorage.exception.AuthenticationException;
+import ru.monyamau.cloudfilestorage.exception.UserAlreadyExistsException;
 import ru.monyamau.cloudfilestorage.repository.RedisSessionStorage;
 import ru.monyamau.cloudfilestorage.repository.UserRepository;
 import ru.monyamau.cloudfilestorage.util.PassHashUtil;
@@ -27,6 +28,9 @@ public class AuthorizationService {
     }
 
     public ResponseUserDto registerUser(UUID uuid, RequestUserDto userDto, int ttlMin) {
+        if (userRepository.existsUserByName(userDto.username())) {
+            throw new UserAlreadyExistsException("Ошибка уникальности: пользователь с этим именем уже существует");
+        }
         String hash = PassHashUtil.hash(userDto.password());
         User savedUser = userRepository.saveAndFlush(new User(userDto.username(), hash));
         resourceService.createPersonalDirectory(savedUser.getId());
