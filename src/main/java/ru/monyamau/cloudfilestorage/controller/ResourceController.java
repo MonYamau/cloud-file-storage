@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import ru.monyamau.cloudfilestorage.dto.request.RequestMovementDto;
 import ru.monyamau.cloudfilestorage.dto.request.RequestQueryDto;
 import ru.monyamau.cloudfilestorage.dto.request.RequestResourceDto;
+import ru.monyamau.cloudfilestorage.dto.request.RequestUploadDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
+import ru.monyamau.cloudfilestorage.exception.InvalidInputException;
 import ru.monyamau.cloudfilestorage.service.ResourceService;
 
 import java.util.List;
@@ -55,9 +57,11 @@ public class ResourceController {
     }
 
     @PostMapping
-    public ResponseEntity<ResponseResourceDto> upload(@Valid @ModelAttribute(name = "path") RequestResourceDto requestDto,
-                                                      @RequestParam(name = "file") MultipartFile file) {
-        ResponseResourceDto responseDto = resourceService.uploadResource(requestDto, file);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+    public ResponseEntity<List<ResponseResourceDto>> upload(@Valid @ModelAttribute RequestUploadDto requestDto) {
+        if (requestDto.file().getOriginalFilename() == null || requestDto.file().getOriginalFilename().isBlank()) {
+            throw new InvalidInputException("Имя файла не может отсутствовать или быть пустым");
+        }
+        List<ResponseResourceDto> responseDtoList = resourceService.uploadResource(requestDto);
+        return new ResponseEntity<>(responseDtoList, HttpStatus.CREATED);
     }
 }

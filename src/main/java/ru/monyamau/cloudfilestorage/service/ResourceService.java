@@ -80,15 +80,36 @@ public class ResourceService {
         resourceStorage.deleteFile(fullPath);
     }
 
-    public ResponseResourceDto uploadResource(RequestResourceDto resourceDto, MultipartFile file) {
-        String fullPath = formatPersonalPath(resourceDto.path());
-        if (file.getOriginalFilename().contains("/")) {
-            createSubdirectories(file.getOriginalFilename(), fullPath);
+    public List<ResponseResourceDto> uploadResource(RequestUploadDto uploadDto) {
+        String fullRequestPath = formatPersonalPath(uploadDto.path());
+        String fileName = uploadDto.file().getOriginalFilename();
+        String filePath = fullRequestPath + fileName;
+        if (isResourceExists(filePath)) {
+            throw new ResourceAlreadyExistsException(
+                    "Ресурс по данному пути уже существует: " + uploadDto.path() + fileName);
         }
-        String filePath = fullPath + file.getOriginalFilename();
-        String resourcePath = resourceStorage.upload(filePath, file);
-        ResourceItem resource = resourceStorage.findFile(resourcePath).orElseThrow(RuntimeException::new);
-        return convert(resource);
+        if (fileName.contains(SEPARATOR_SIGN)) {
+            return uploadDirectory(fullRequestPath, fileName, uploadDto.file());
+        }
+        return uploadFile(filePath, uploadDto.file());
+    }
+
+    private List<ResponseResourceDto> uploadDirectory(String requestPath, String fileName, MultipartFile file) {
+        List<ResourceItem> allResources = createSubdirectories(fileName, requestPath);
+        String filePath = resourceStorage.upload(requestPath + fileName, file);
+        ResourceItem resource = resourceStorage.findFile(filePath)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Ошибка сохранения файла: не удалось найти загруженный ресурс"));
+        allResources.add(resource);
+        return allResources.stream().map(this::convert).toList();
+    }
+
+    private List<ResponseResourceDto> uploadFile(String path, MultipartFile file) {
+        String resourcePath = resourceStorage.upload(path, file);
+        ResourceItem resource = resourceStorage.findFile(resourcePath)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Ошибка сохранения файла: не удалось найти загруженный ресурс"));
+        return List.of(convert(resource));
     }
 
     public byte[] downloadResource(RequestResourceDto resourceDto) {
@@ -189,14 +210,19 @@ public class ResourceService {
         return resourceStorage.findDirectory(newPath).orElseThrow(RuntimeException::new);
     }
 
-    private void createSubdirectories(String originalFilename, String path) {
-        List<String> resources = Arrays.stream(originalFilename.split("/")).collect(Collectors.toList());
+    private List<ResourceItem> createSubdirectories(String originalFilename, String path) {
+        List<ResourceItem> newSubdirectories = new ArrayList<>();
+        List<String> resources = Arrays.stream(originalFilename.split(SEPARATOR_SIGN)).collect(Collectors.toList());
         resources.removeLast();
         StringBuilder pathBuilder = new StringBuilder(path);
         for (String resource : resources) {
-            pathBuilder.append(resource).append("/");
-            resourceStorage.createDirectory(pathBuilder.toString());
+            pathBuilder.append(resource).append(SEPARATOR_SIGN);
+            if (resourceStorage.findDirectory(pathBuilder.toString()).isEmpty()) {
+                resourceStorage.createDirectory(pathBuilder.toString());
+                newSubdirectories.add(new ResourceItem(pathBuilder.toString(), true, null));
+            }
         }
+        return newSubdirectories;
     }
 
     private boolean isResourceExists(String path) {
