@@ -4,6 +4,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.monyamau.cloudfilestorage.dto.request.*;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
+import ru.monyamau.cloudfilestorage.exception.ResourceAlreadyExistsException;
+import ru.monyamau.cloudfilestorage.exception.ResourceNotFoundException;
 import ru.monyamau.cloudfilestorage.model.ResourceItem;
 import ru.monyamau.cloudfilestorage.model.ResourceType;
 import ru.monyamau.cloudfilestorage.repository.MinioResourceStorage;
@@ -22,6 +24,7 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class ResourceService {
     private final static String PERSONAL_DIRECTORY_NAME = "user-%s-files/";
+    private final static String SEPARATOR_SIGN = "/";
 
     private final MinioResourceStorage resourceStorage;
     private final UserContext userContext;
@@ -42,16 +45,18 @@ public class ResourceService {
     public ResponseResourceDto findResource(RequestResourceDto resourceDto) {
         String fullPath = formatPersonalPath(resourceDto.path());
         if (isDirectory(fullPath)) {
-            ResourceItem directory = resourceStorage.findDirectory(fullPath).orElseThrow(RuntimeException::new);
+            ResourceItem directory = resourceStorage.findDirectory(fullPath)
+                    .orElseThrow(() -> new ResourceNotFoundException("Директория с текущим именем не найдена: " + resourceDto.path()));
             return convert(directory);
         }
-        ResourceItem file = resourceStorage.findFile(fullPath).orElseThrow(RuntimeException::new);
+        ResourceItem file = resourceStorage.findFile(fullPath)
+                .orElseThrow(() -> new ResourceNotFoundException("Файл с текущим именем не найден: " + resourceDto.path()));
         return convert(file);
     }
 
     public List<ResponseResourceDto> searchResource(RequestQueryDto queryDto) {
         String personalDirectory = PERSONAL_DIRECTORY_NAME.formatted(userContext.getUserId());
-        String personalDirectoryName = personalDirectory.replace("/", "");
+        String personalDirectoryName = personalDirectory.replace(SEPARATOR_SIGN, "");
         List<ResponseResourceDto> result = new ArrayList<>();
         List<ResourceItem> resources = resourceStorage.findAllByPrefix(personalDirectory);
         for (ResourceItem resource : resources) {
@@ -66,6 +71,9 @@ public class ResourceService {
 
     public void deleteResource(RequestResourceDto resourceDto) {
         String fullPath = formatPersonalPath(resourceDto.path());
+        if (!isResourceExists(fullPath)) {
+            throw new ResourceNotFoundException("Ресурс по данному пути не найден: " + resourceDto.path());
+        }
         if (isDirectory(fullPath)) {
             resourceStorage.deleteDirectory(fullPath);
         }
@@ -85,6 +93,9 @@ public class ResourceService {
 
     public byte[] downloadResource(RequestResourceDto resourceDto) {
         String fullPath = formatPersonalPath(resourceDto.path());
+        if (!isResourceExists(fullPath)) {
+         throw new ResourceNotFoundException("Ресурс по данному пути не найден: " + resourceDto.path());
+        }
         List<ResourceItem> resourceItemList = resourceStorage.findAllByPrefix(fullPath);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
@@ -105,6 +116,12 @@ public class ResourceService {
     public ResponseResourceDto changeResource(RequestMovementDto movementDto) {
         String oldPath = formatPersonalPath(movementDto.from());
         String newPath = formatPersonalPath(movementDto.to());
+        if (!isResourceExists(oldPath)) {
+            throw new ResourceNotFoundException("Ресурс по данному пути не найден: " + movementDto.from());
+        }
+        if (isResourceExists(newPath)) {
+            throw new ResourceAlreadyExistsException("Ресурс по данному пути уже существует: " + movementDto.to());
+        }
         if (isDirectory(oldPath) && isDirectory(newPath)) {
             ResourceItem resourceItem = changeDirectory(oldPath, newPath);
             return convert(resourceItem);
@@ -115,6 +132,9 @@ public class ResourceService {
 
     public List<ResponseResourceDto> findAllFromDirectory(RequestDirectoryDto directoryDto) {
         String fullPath = formatPersonalPath(directoryDto.path());
+        if (!isResourceExists(fullPath)) {
+         throw new ResourceNotFoundException("Ресурс по данному пути не найден: " + directoryDto.path());
+        }
         List<ResponseResourceDto> result = new ArrayList<>();
         List<ResourceItem> resources = resourceStorage.findAllFromDirectory(fullPath);
         for (ResourceItem resource : resources) {
@@ -125,9 +145,25 @@ public class ResourceService {
 
     public ResponseResourceDto createDirectory(RequestDirectoryDto directoryDto) {
         String fullPath = formatPersonalPath(directoryDto.path());
+        String parentDirectory = formatParentDirectory(fullPath);
+        if (!isResourceExists(parentDirectory)) {
+            throw new ResourceNotFoundException("Родительская директория не найдена");
+        }
+        if (isResourceExists(fullPath)) {
+            throw new ResourceAlreadyExistsException("Директория по данному пути уже существует: " + directoryDto.path());
+        }
         resourceStorage.createDirectory(fullPath);
         ResourceItem item = resourceStorage.findDirectory(fullPath).orElseThrow(RuntimeException::new);
         return convert(item);
+    }
+
+    private String formatParentDirectory(String fullPath) {
+        String[] directories = fullPath.split(SEPARATOR_SIGN);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < directories.length - 1; i++) {
+            stringBuilder.append(directories[i]).append(SEPARATOR_SIGN);
+        }
+        return stringBuilder.toString();
     }
 
     private String formatPersonalPath(String path) {
@@ -163,6 +199,13 @@ public class ResourceService {
         }
     }
 
+    private boolean isResourceExists(String path) {
+        if (isDirectory(path)) {
+            return resourceStorage.findDirectory(path).isPresent();
+        }
+        return resourceStorage.findFile(path).isPresent();
+    }
+
     private boolean matchQueryWithLowerCase(String name, String query) {
         name = name.toLowerCase();
         query = query.toLowerCase();
@@ -170,7 +213,7 @@ public class ResourceService {
     }
 
     private ResponseResourceDto convert(ResourceItem item) {
-        String[] resources = item.objectName().split("/");
+        String[] resources = item.objectName().split(SEPARATOR_SIGN);
         String path = collectPath(resources);
         String name = resources[resources.length - 1];
         if (isDirectory(item.objectName()) || item.isDir()) {
@@ -182,12 +225,12 @@ public class ResourceService {
     private String collectPath(String[] resources) {
         StringBuilder path = new StringBuilder();
         for (int i = 1; i < resources.length - 1; i++) {
-            path.append(resources[i]).append("/");
+            path.append(resources[i]).append(SEPARATOR_SIGN);
         }
         return path.toString();
     }
 
     private boolean isDirectory(String path) {
-        return path.endsWith("/");
+        return path.endsWith(SEPARATOR_SIGN);
     }
 }
