@@ -2,9 +2,7 @@ package ru.monyamau.cloudfilestorage.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import ru.monyamau.cloudfilestorage.dto.request.RequestDirectoryDto;
-import ru.monyamau.cloudfilestorage.dto.request.RequestQueryDto;
-import ru.monyamau.cloudfilestorage.dto.request.RequestResourceDto;
+import ru.monyamau.cloudfilestorage.dto.request.*;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
 import ru.monyamau.cloudfilestorage.model.ResourceItem;
 import ru.monyamau.cloudfilestorage.model.ResourceType;
@@ -104,9 +102,9 @@ public class ResourceService {
         return byteArrayOutputStream.toByteArray();
     }
 
-    public ResponseResourceDto changeResource(String oldName, String newName) {
-        String oldPath = formatPersonalPath(oldName);
-        String newPath = formatPersonalPath(newName);
+    public ResponseResourceDto changeResource(RequestMovementDto movementDto) {
+        String oldPath = formatPersonalPath(movementDto.from());
+        String newPath = formatPersonalPath(movementDto.to());
         if (isDirectory(oldPath) && isDirectory(newPath)) {
             ResourceItem resourceItem = changeDirectory(oldPath, newPath);
             return convert(resourceItem);

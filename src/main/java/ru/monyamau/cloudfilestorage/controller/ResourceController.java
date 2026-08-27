@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import ru.monyamau.cloudfilestorage.dto.request.RequestMovementDto;
 import ru.monyamau.cloudfilestorage.dto.request.RequestQueryDto;
 import ru.monyamau.cloudfilestorage.dto.request.RequestResourceDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
@@ -43,9 +43,8 @@ public class ResourceController {
     }
 
     @PostMapping("/move")
-    public ResponseEntity<ResponseResourceDto> change(@Valid @ModelAttribute(name = "from") RequestResourceDto fromPathDto,
-                                                      @Valid @ModelAttribute(name = "to") RequestResourceDto toPathDto) {
-        ResponseResourceDto responseDto = resourceService.changeResource(fromPathDto.path(), toPathDto.path());
+    public ResponseEntity<ResponseResourceDto> change(@Valid @ModelAttribute RequestMovementDto requestDto) {
+        ResponseResourceDto responseDto = resourceService.changeResource(requestDto);
         return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
 
