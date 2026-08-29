@@ -47,13 +47,17 @@ public class ResourceService {
 
     public List<ResponseResourceDto> findAllFromDirectory(RequestDirectoryDto directoryDto) {
         String fullPath = formatPersonalPath(directoryDto.path());
+        String personalDirectory = PERSONAL_DIRECTORY_NAME.formatted(userContext.getUserId());
+        String personalDirectoryName = personalDirectory.replace(SEPARATOR_SIGN, "");
         if (!isResourceExists(fullPath)) {
             throw new ResourceNotFoundException("Ресурс по данному пути не найден: " + directoryDto.path());
         }
         List<ResponseResourceDto> result = new ArrayList<>();
         List<ResourceItem> resources = resourceStorage.findAllFromDirectory(fullPath);
         for (ResourceItem resource : resources) {
-            result.add(convert(resource));
+            ResponseResourceDto converted = convert(resource);
+            if (personalDirectoryName.equals(converted.name())) continue;
+            result.add(converted);
         }
         return result;
     }
@@ -76,6 +80,10 @@ public class ResourceService {
 
     public ResponseResourceDto findResource(RequestResourceDto resourceDto) {
         String fullPath = formatPersonalPath(resourceDto.path());
+        String personalDirectory = PERSONAL_DIRECTORY_NAME.formatted(userContext.getUserId());
+        if (personalDirectory.equals(fullPath)) {
+            return new ResponseResourceDto("", "", null, ResourceType.DIRECTORY);
+        }
         if (isDirectory(fullPath)) {
             ResourceItem directory = resourceStorage.findDirectory(fullPath)
                     .orElseThrow(() -> new ResourceNotFoundException(
@@ -278,6 +286,9 @@ public class ResourceService {
 
     private String formatPersonalPath(String path) {
         String personalDirectory = PERSONAL_DIRECTORY_NAME.formatted(userContext.getUserId());
+        if (path.equals(SEPARATOR_SIGN)) {
+            return personalDirectory;
+        }
         return personalDirectory + path;
     }
 

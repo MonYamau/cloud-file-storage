@@ -13,5 +13,5 @@ public record RequestUploadDto(
         String path,
         @NotNull(message = "Файл не может отсутствовать")
         MultipartFile file
-        ) {
+) {
 }
