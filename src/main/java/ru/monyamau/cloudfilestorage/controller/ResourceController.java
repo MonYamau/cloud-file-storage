@@ -10,6 +10,7 @@ import ru.monyamau.cloudfilestorage.dto.request.RequestMovementDto;
 import ru.monyamau.cloudfilestorage.dto.request.RequestQueryDto;
 import ru.monyamau.cloudfilestorage.dto.request.RequestResourceDto;
 import ru.monyamau.cloudfilestorage.dto.request.RequestUploadDto;
+import ru.monyamau.cloudfilestorage.dto.response.ResponseDownloadDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
 import ru.monyamau.cloudfilestorage.exception.InvalidInputException;
 import ru.monyamau.cloudfilestorage.service.ResourceService;
@@ -39,9 +40,10 @@ public class ResourceController {
 
     @GetMapping("/download")
     public ResponseEntity<byte[]> download(@Valid @ModelAttribute(name = "path") RequestResourceDto requestDto) {
-        byte[] bytes = resourceService.downloadResource(requestDto);
+        ResponseDownloadDto responseDto = resourceService.downloadResource(requestDto);
         return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=download.zip").body(bytes);
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=%s".formatted(responseDto.filename()))
+                .body(responseDto.bytes());
     }
 
     @PostMapping("/move")
