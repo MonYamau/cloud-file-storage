@@ -107,13 +107,14 @@ public class ResourceService {
     }
 
     public List<ResponseResourceDto> uploadResource(RequestUploadDto uploadDto) {
-        String fullRequestPath = formatPersonalPath(uploadDto.path());
-        String fileName = uploadDto.file().getOriginalFilename();
-        String filePath = fullRequestPath + fileName;
-        checkNonexistenceOfResource(filePath, uploadDto.path() + fileName);
-        return fileName.contains(SEPARATOR_SIGN) ?
-                uploadDirectory(fullRequestPath, fileName, uploadDto.file())
-                : uploadFile(filePath, uploadDto.file());
+        String fullPath = formatPersonalPath(uploadDto.path());
+        checkExistenceOfResource(fullPath, uploadDto.path());
+        for (MultipartFile multipartFile : uploadDto.files()) {
+            String originalFilename = multipartFile.getOriginalFilename();
+            checkNonexistenceOfResource(fullPath + originalFilename, uploadDto.path() + originalFilename);
+        }
+        List<ResourceItem> resourceItemList = uploadFiles(fullPath, uploadDto.files());
+        return resourceItemList.stream().map(this::convert).toList();
     }
 
     public ResponseDownloadDto downloadResource(RequestResourceDto resourceDto) {
@@ -193,20 +194,19 @@ public class ResourceService {
         return resourceItem;
     }
 
-    private List<ResponseResourceDto> uploadDirectory(String requestPath, String fileName, MultipartFile file) {
-        List<ResourceItem> allResources = createSubdirectories(fileName, requestPath);
-        String filePath = resourceStorage.upload(requestPath + fileName, file);
-        ResourceItem resource = resourceStorage.findFile(filePath)
-                .orElseThrow(() -> new IllegalStateException("Ошибка сохранения директории: не удалось найти ресурс"));
-        allResources.add(resource);
-        return allResources.stream().map(this::convert).toList();
-    }
-
-    private List<ResponseResourceDto> uploadFile(String path, MultipartFile file) {
-        String resourcePath = resourceStorage.upload(path, file);
-        ResourceItem resource = resourceStorage.findFile(resourcePath)
-                .orElseThrow(() -> new IllegalStateException("Ошибка сохранения файла: не удалось найти ресурс"));
-        return List.of(convert(resource));
+    private List<ResourceItem> uploadFiles(String path, List<MultipartFile> files) {
+        List<ResourceItem> allResources = new ArrayList<>();
+        for (MultipartFile file : files) {
+            String filename = file.getOriginalFilename();
+            if (filename == null || isDirectory(filename)) continue;
+            List<ResourceItem> subdirectories = createSubdirectories(filename, path, allResources);
+            String uploaded = resourceStorage.upload(path + filename, file);
+            ResourceItem resourceItem = resourceStorage.findFile(uploaded)
+                    .orElseThrow(() -> new IllegalStateException("Ошибка сохранения файла: не удалось найти ресурс"));
+            allResources.addAll(subdirectories);
+            allResources.add(resourceItem);
+        }
+        return allResources;
     }
 
     private void validateMovement(String oldPath, String newPath) {
@@ -221,16 +221,18 @@ public class ResourceService {
         }
     }
 
-    private List<ResourceItem> createSubdirectories(String originalFilename, String path) {
+    private List<ResourceItem> createSubdirectories(String filename, String path, List<ResourceItem> createdResources) {
         List<ResourceItem> newSubdirectories = new ArrayList<>();
-        List<String> resources = Arrays.stream(originalFilename.split(SEPARATOR_SIGN)).collect(Collectors.toList());
+        List<String> resources = Arrays.stream(filename.split(SEPARATOR_SIGN)).collect(Collectors.toList());
         resources.removeLast();
         StringBuilder pathBuilder = new StringBuilder(path);
         for (String resource : resources) {
             pathBuilder.append(resource).append(SEPARATOR_SIGN);
-            if (resourceStorage.findDirectory(pathBuilder.toString()).isEmpty()) {
-                resourceStorage.createDirectory(pathBuilder.toString());
-                newSubdirectories.add(new ResourceItem(pathBuilder.toString(), true, null));
+            String fullResourcePath = pathBuilder.toString();
+            if (createdResources.contains(new ResourceItem(fullResourcePath, true, null))) continue;
+            if (resourceStorage.findDirectory(fullResourcePath).isEmpty()) {
+                resourceStorage.createDirectory(fullResourcePath);
+                newSubdirectories.add(new ResourceItem(fullResourcePath, true, null));
             }
         }
         return newSubdirectories;
