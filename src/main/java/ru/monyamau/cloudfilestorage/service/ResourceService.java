@@ -1,7 +1,9 @@
 package ru.monyamau.cloudfilestorage.service;
 
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import ru.monyamau.cloudfilestorage.dto.event.UserRegistrationEventDto;
 import ru.monyamau.cloudfilestorage.dto.request.*;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseDownloadDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
@@ -10,7 +12,7 @@ import ru.monyamau.cloudfilestorage.exception.ResourceAlreadyExistsException;
 import ru.monyamau.cloudfilestorage.exception.ResourceNotFoundException;
 import ru.monyamau.cloudfilestorage.model.ResourceItem;
 import ru.monyamau.cloudfilestorage.model.ResourceType;
-import ru.monyamau.cloudfilestorage.util.UserContext;
+import ru.monyamau.cloudfilestorage.handler.UserContext;
 import ru.monyamau.cloudfilestorage.infrastructure.ResourceStorage;
 
 import java.io.ByteArrayOutputStream;
@@ -36,9 +38,10 @@ public class ResourceService {
         this.userContext = userContext;
     }
 
-    public void createPersonalDirectory(int userId) {
-        String directoryName = PERSONAL_DIRECTORY_NAME.formatted(userId);
-        if (resourceStorage.findDirectory(directoryName).isEmpty()) {
+    @EventListener
+    public void createPersonalDirectory(UserRegistrationEventDto eventDto) {
+        String directoryName = PERSONAL_DIRECTORY_NAME.formatted(eventDto.userId());
+        if (resourceStorage.findResource(directoryName).isEmpty()) {
             resourceStorage.createDirectory(directoryName);
         }
     }

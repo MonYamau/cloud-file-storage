@@ -1,4 +1,4 @@
-package ru.monyamau.cloudfilestorage.util;
+package ru.monyamau.cloudfilestorage.handler;
 
 import lombok.Getter;
 import lombok.Setter;

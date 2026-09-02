@@ -3,6 +3,7 @@ package ru.monyamau.cloudfilestorage.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import ru.monyamau.cloudfilestorage.dto.event.UserRegistrationEventDto;
 import ru.monyamau.cloudfilestorage.dto.request.RequestUserDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseUserDto;
 import ru.monyamau.cloudfilestorage.entity.User;
@@ -18,7 +19,6 @@ import java.util.UUID;
 @Service
 public class AuthorizationService {
     private final UserRepository userRepository;
-    private final ResourceService resourceService;
     private final SessionStorage sessionStorage;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -35,7 +35,7 @@ public class AuthorizationService {
         }
         String hash = PassHashUtil.hash(userDto.password());
         User savedUser = userRepository.saveAndFlush(new User(userDto.username(), hash));
-        resourceService.createPersonalDirectory(savedUser.getId());
+        eventPublisher.publishEvent(new UserRegistrationEventDto(savedUser.getId()));
         String key = String.valueOf(uuid);
         String value = String.valueOf(savedUser.getId());
         sessionStorage.saveWithTtl(key, value, ttlMin);
