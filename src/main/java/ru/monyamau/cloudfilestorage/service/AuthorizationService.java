@@ -1,13 +1,14 @@
 package ru.monyamau.cloudfilestorage.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import ru.monyamau.cloudfilestorage.dto.request.RequestUserDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseUserDto;
 import ru.monyamau.cloudfilestorage.entity.User;
 import ru.monyamau.cloudfilestorage.exception.AuthenticationException;
 import ru.monyamau.cloudfilestorage.exception.UserAlreadyExistsException;
-import ru.monyamau.cloudfilestorage.repository.RedisSessionStorage;
+import ru.monyamau.cloudfilestorage.repository.SessionStorage;
 import ru.monyamau.cloudfilestorage.repository.UserRepository;
 import ru.monyamau.cloudfilestorage.util.PassHashUtil;
 
@@ -17,14 +18,15 @@ import java.util.UUID;
 @Service
 public class AuthorizationService {
     private final UserRepository userRepository;
-    private final RedisSessionStorage sessionStorage;
     private final ResourceService resourceService;
+    private final SessionStorage sessionStorage;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Autowired
-    public AuthorizationService(UserRepository userRepository, RedisSessionStorage sessionStorage, ResourceService resourceService) {
+    public AuthorizationService(UserRepository userRepository, SessionStorage sessionStorage, ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.sessionStorage = sessionStorage;
-        this.resourceService = resourceService;
+        this.eventPublisher = eventPublisher;
     }
 
     public ResponseUserDto registerUser(UUID uuid, RequestUserDto userDto, int ttlMin) {
@@ -36,7 +38,7 @@ public class AuthorizationService {
         resourceService.createPersonalDirectory(savedUser.getId());
         String key = String.valueOf(uuid);
         String value = String.valueOf(savedUser.getId());
-        sessionStorage.save(key, value, ttlMin);
+        sessionStorage.saveWithTtl(key, value, ttlMin);
         return new ResponseUserDto(savedUser.getName());
     }
 
@@ -47,7 +49,7 @@ public class AuthorizationService {
             if (PassHashUtil.check(userDto.password(), currentUser.getPassword())) {
                 String key = String.valueOf(uuid);
                 String value = String.valueOf(currentUser.getId());
-                sessionStorage.save(key, value, ttlMin);
+                sessionStorage.saveWithTtl(key, value, ttlMin);
                 return new ResponseUserDto(currentUser.getName());
             }
         }

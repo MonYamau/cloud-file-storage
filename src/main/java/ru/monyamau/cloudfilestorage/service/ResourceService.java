@@ -10,8 +10,8 @@ import ru.monyamau.cloudfilestorage.exception.ResourceAlreadyExistsException;
 import ru.monyamau.cloudfilestorage.exception.ResourceNotFoundException;
 import ru.monyamau.cloudfilestorage.model.ResourceItem;
 import ru.monyamau.cloudfilestorage.model.ResourceType;
-import ru.monyamau.cloudfilestorage.repository.MinioResourceStorage;
 import ru.monyamau.cloudfilestorage.util.UserContext;
+import ru.monyamau.cloudfilestorage.infrastructure.ResourceStorage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,10 +28,10 @@ public class ResourceService {
     private final static String PERSONAL_DIRECTORY_NAME = "user-%s-files/";
     private final static String SEPARATOR_SIGN = "/";
 
-    private final MinioResourceStorage resourceStorage;
+    private final ResourceStorage resourceStorage;
     private final UserContext userContext;
 
-    public ResourceService(MinioResourceStorage resourceStorage, UserContext userContext) {
+    public ResourceService(ResourceStorage resourceStorage, UserContext userContext) {
         this.resourceStorage = resourceStorage;
         this.userContext = userContext;
     }

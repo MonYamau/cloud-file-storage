@@ -6,16 +6,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import ru.monyamau.cloudfilestorage.exception.AuthenticationException;
-import ru.monyamau.cloudfilestorage.repository.RedisSessionStorage;
+import ru.monyamau.cloudfilestorage.repository.SessionStorage;
 import ru.monyamau.cloudfilestorage.util.CookieUtil;
-import ru.monyamau.cloudfilestorage.util.UserContext;
 
 @Component
 public class SessionInterceptor implements HandlerInterceptor {
-    private final RedisSessionStorage sessionStorage;
+    private final SessionStorage sessionStorage;
     private final UserContext userContext;
 
-    public SessionInterceptor(RedisSessionStorage sessionStorage, UserContext userContext) {
+    public SessionInterceptor(SessionStorage sessionStorage, UserContext userContext) {
         this.sessionStorage = sessionStorage;
         this.userContext = userContext;
     }

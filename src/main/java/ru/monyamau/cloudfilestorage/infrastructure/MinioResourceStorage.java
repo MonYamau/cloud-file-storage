@@ -1,4 +1,4 @@
-package ru.monyamau.cloudfilestorage.repository;
+package ru.monyamau.cloudfilestorage.infrastructure;
 
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
@@ -7,9 +7,9 @@ import io.minio.messages.DeleteResult.Error;
 import io.minio.messages.Item;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
 import ru.monyamau.cloudfilestorage.model.ResourceItem;
+import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -17,10 +17,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
-public class MinioResourceStorage {
+@Component
+public class MinioResourceStorage implements ResourceStorage {
     private static final long AUTOMATIC_BUFFER = -1;
     private static final String NOT_FOUND_RESOURCE = "NoSuchKey";
+    private final static String SEPARATOR_SIGN = "/";
+
     private final MinioClient minioClient;
     private final String bucketName;
 

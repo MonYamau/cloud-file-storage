@@ -1,6 +1,7 @@
 package ru.monyamau.cloudfilestorage.repository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -8,7 +9,7 @@ import java.time.Duration;
 import java.util.Optional;
 
 @Repository
-public class RedisSessionStorage {
+public class RedisSessionStorage implements SessionStorage {
     private final StringRedisTemplate redisTemplate;
 
     @Autowired
@@ -16,15 +17,27 @@ public class RedisSessionStorage {
         this.redisTemplate = redisTemplate;
     }
 
-    public void save(String key, String value, int ttlMin) {
-        redisTemplate.opsForValue().set(key, value, Duration.ofMinutes(ttlMin));
+    public void saveWithTtl(String key, String value, int ttlMin) {
+        try {
+            redisTemplate.opsForValue().set(key, value, Duration.ofMinutes(ttlMin));
+        } catch (DataAccessException e) {
+            throw new RuntimeException();
+        }
     }
 
     public Optional<String> findBy(String key) {
-        return Optional.ofNullable(redisTemplate.opsForValue().get(key));
+        try {
+            return Optional.ofNullable(redisTemplate.opsForValue().get(key));
+        } catch (DataAccessException e) {
+            throw new RuntimeException();
+        }
     }
 
     public void delete(String key) {
-        redisTemplate.delete(key);
+        try {
+            redisTemplate.delete(key);
+        } catch (DataAccessException e) {
+            throw new RuntimeException();
+        }
     }
 }
