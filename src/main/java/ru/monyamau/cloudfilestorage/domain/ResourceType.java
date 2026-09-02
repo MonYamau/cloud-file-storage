@@ -1,4 +1,4 @@
-package ru.monyamau.cloudfilestorage.model;
+package ru.monyamau.cloudfilestorage.domain;
 
 public enum ResourceType {
     FILE,

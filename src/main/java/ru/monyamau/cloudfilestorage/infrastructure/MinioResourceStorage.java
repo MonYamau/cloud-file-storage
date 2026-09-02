@@ -8,8 +8,8 @@ import io.minio.messages.Item;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
-import ru.monyamau.cloudfilestorage.model.ResourceItem;
 import org.springframework.stereotype.Component;
+import ru.monyamau.cloudfilestorage.domain.ResourceItem;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
