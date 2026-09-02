@@ -15,18 +15,18 @@ import ru.monyamau.cloudfilestorage.exception.ResourceAlreadyExistsException;
 import ru.monyamau.cloudfilestorage.exception.ResourceNotFoundException;
 import ru.monyamau.cloudfilestorage.handler.UserContext;
 import ru.monyamau.cloudfilestorage.infrastructure.ResourceStorage;
+import ru.monyamau.cloudfilestorage.util.ArchiveUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @Service
 public class ResourceService {
     private final static String PERSONAL_DIRECTORY_NAME = "user-%s-files/";
+    private final static String ARCHIVE_FORMAT = ".zip";
     private final static String SEPARATOR_SIGN = "/";
 
     private final ResourceStorage resourceStorage;
@@ -126,40 +126,17 @@ public class ResourceService {
     public ResponseDownloadDto downloadResource(RequestResourceDto resourceDto) {
         ResourcePath path = new ResourcePath(formatPersonalDirectory(), resourceDto.path());
         checkExistenceOfResource(path.getFullPath());
-        return path.isDirectory() ?
-                downloadDirectory(path.getFullPath(), path.getResourceName())
-                : downloadFile(path.getFullPath(), path.getResourceName());
-    }
-
-    private ResponseDownloadDto downloadFile(String path, String filename) {
-        try (InputStream inputStream = resourceStorage.downloadResource(path)) {
-            return new ResponseDownloadDto(filename, inputStream.readAllBytes());
-        } catch (IOException e) {
-            //TODO
-            throw new RuntimeException(e);
-        }
-    }
-
-    private ResponseDownloadDto downloadDirectory(String path, String filename) {
-        List<ResourceItem> resourceItemList = resourceStorage.findAllByPrefix(path);
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        writeDirectoryContentsToZip(byteArrayOutputStream, resourceItemList, path);
-        return new ResponseDownloadDto(filename + ".zip", byteArrayOutputStream.toByteArray());
-    }
-
-    private void writeDirectoryContentsToZip(ByteArrayOutputStream byteArrayOutputStream, List<ResourceItem> resourceItemList, String path) {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
-            for (ResourceItem resourceItem : resourceItemList) {
-                String fullObjectName = resourceItem.objectName();
-                if (resourceItem.isDir()) continue;
-                zipOutputStream.putNextEntry(new ZipEntry(fullObjectName.replace(path, "")));
-                try (InputStream inputStream = resourceStorage.downloadResource(resourceItem.objectName())) {
-                    inputStream.transferTo(zipOutputStream);
-                }
-                zipOutputStream.closeEntry();
+        try {
+            if (path.isDirectory()) {
+                List<ResourceItem> resourceItemList = resourceStorage.findAllByPrefix(path.getFullPath());
+                ByteArrayOutputStream outputStream = ArchiveUtil
+                        .archiveItemsToZip(resourceItemList, path.getFullPath(), resourceStorage::downloadResource);
+                return new ResponseDownloadDto(path.getResourceName() + ARCHIVE_FORMAT, outputStream.toByteArray());
             }
+            InputStream inputStream = resourceStorage.downloadResource(path.getFullPath());
+            return new ResponseDownloadDto(path.getResourceName(), inputStream.readAllBytes());
         } catch (IOException e) {
-            throw new RuntimeException();
+            throw new IllegalStateException("Ошибка загрузки: не удалось скачать ресурс", e);
         }
     }
 
@@ -175,7 +152,7 @@ public class ResourceService {
             }
             return allResources;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException("Ошибка загрузки: не удалось сохранить ресурс", e);
         }
     }
 
