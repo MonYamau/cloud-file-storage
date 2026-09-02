@@ -2,18 +2,19 @@ package ru.monyamau.cloudfilestorage.infrastructure;
 
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
+import io.minio.errors.MinioException;
 import io.minio.messages.DeleteRequest.Object;
 import io.minio.messages.DeleteResult.Error;
 import io.minio.messages.Item;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.stereotype.Component;
 import ru.monyamau.cloudfilestorage.domain.ResourceItem;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,41 +33,25 @@ public class MinioResourceStorage implements ResourceStorage {
         this.bucketName = bucketName;
     }
 
-    public Optional<ResourceItem> findFile(String objectPath) {
-        try {
-            StatObjectResponse response = minioClient.statObject(
-                    StatObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(objectPath)
-                            .build()
-            );
-            return Optional.of(new ResourceItem(response.object(), false, response.size()));
-        } catch (ErrorResponseException e) {
-            if (e.errorResponse().code().equals(NOT_FOUND_RESOURCE)) {
-                return Optional.empty();
-            }
-            throw new RuntimeException(e);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+    public Optional<ResourceItem> findResource(String objectPath) {
+        return isDirectory(objectPath)
+                ? findDirectory(objectPath)
+                : findFile(objectPath);
+    }
+
+    public void deleteResource(String objectPath) {
+        if (isDirectory(objectPath)) {
+            deleteDirectory(objectPath);
+        } else {
+            deleteFile(objectPath);
         }
     }
 
-    public Optional<ResourceItem> findDirectory(String objectPath) {
-        try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(bucketName)
-                            .recursive(false)
-                            .prefix(objectPath)
-                            .build()
-            );
-            if (results.iterator().hasNext()) {
-                Item item = results.iterator().next().get();
-                return Optional.of(convert(item));
-            }
-            return Optional.empty();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+    public void moveResource(String oldPath, String newPath) {
+        if (isDirectory(oldPath) && isDirectory(newPath)) {
+            moveDirectory(oldPath, newPath);
+        } else {
+            moveFile(oldPath, newPath);
         }
     }
 
@@ -79,7 +64,7 @@ public class MinioResourceStorage implements ResourceStorage {
                             .stream(new ByteArrayInputStream(new byte[]{}), 0L, AUTOMATIC_BUFFER)
                             .build()
             );
-        } catch (Exception e) {
+        } catch (MinioException e) {
             throw new RuntimeException(e);
         }
     }
@@ -99,7 +84,7 @@ public class MinioResourceStorage implements ResourceStorage {
                 itemList.add(convert(item));
             }
             return itemList;
-        } catch (Exception e) {
+        } catch (MinioException e) {
             throw new RuntimeException(e);
         }
     }
@@ -119,48 +104,29 @@ public class MinioResourceStorage implements ResourceStorage {
                 itemList.add(convert(item));
             }
             return itemList;
-        } catch (Exception e) {
+        } catch (MinioException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public String copy(String oldPath, String newPath) {
-        try {
-            ObjectWriteResponse objectWriteResponse = minioClient.copyObject(
-                    CopyObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(newPath)
-                            .source(
-                                    SourceObject.builder()
-                                            .bucket(bucketName)
-                                            .object(oldPath)
-                                            .build()
-                            )
-                            .build()
-            );
-            return objectWriteResponse.object();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public String upload(String objectPath, MultipartFile file) {
+    public String uploadResource(String objectPath, InputStream inputStream, long size, String contentType) {
+        createSubdirectories(objectPath);
         try {
             ObjectWriteResponse objectWriteResponse = minioClient.putObject(
                     PutObjectArgs.builder()
-                            .stream(file.getInputStream(), file.getSize(), AUTOMATIC_BUFFER)
+                            .stream(inputStream, size, AUTOMATIC_BUFFER)
                             .object(objectPath)
                             .bucket(bucketName)
-                            .contentType(file.getContentType())
+                            .contentType(contentType)
                             .build()
             );
             return objectWriteResponse.object();
-        } catch (Exception e) {
+        } catch (MinioException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public InputStream download(String objectPath) {
+    public InputStream downloadResource(String objectPath) {
         try {
             return minioClient.getObject(
                     GetObjectArgs.builder()
@@ -168,12 +134,50 @@ public class MinioResourceStorage implements ResourceStorage {
                             .object(objectPath)
                             .build()
             );
-        } catch (Exception e) {
+        } catch (MinioException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void deleteFile(String objectPath) {
+    private Optional<ResourceItem> findFile(String objectPath) {
+        try {
+            StatObjectResponse response = minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectPath)
+                            .build()
+            );
+            return Optional.of(new ResourceItem(response.object(), false, response.size()));
+        } catch (ErrorResponseException e) {
+            if (e.errorResponse().code().equals(NOT_FOUND_RESOURCE)) {
+                return Optional.empty();
+            }
+            throw new RuntimeException(e);
+        } catch (MinioException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Optional<ResourceItem> findDirectory(String objectPath) {
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(bucketName)
+                            .recursive(false)
+                            .prefix(objectPath)
+                            .build()
+            );
+            if (results.iterator().hasNext()) {
+                Item item = results.iterator().next().get();
+                return Optional.of(convert(item));
+            }
+            return Optional.empty();
+        } catch (MinioException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void deleteFile(String objectPath) {
         try {
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
@@ -181,12 +185,12 @@ public class MinioResourceStorage implements ResourceStorage {
                             .object(objectPath)
                             .build()
             );
-        } catch (Exception e) {
+        } catch (MinioException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void deleteDirectory(String objectPath) {
+    private void deleteDirectory(String objectPath) {
         try {
             List<ResourceItem> result = findAllByPrefix(objectPath);
             List<Object> deletedList = new ArrayList<>();
@@ -204,13 +208,65 @@ public class MinioResourceStorage implements ResourceStorage {
                     throw new RuntimeException(errorResult.get().message());
                 }
             }
-        } catch (Exception e) {
+        } catch (MinioException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public ResourceItem convert(Item item) {
-        boolean isDir = item.objectName().endsWith("/");
-        return new ResourceItem(item.objectName(), isDir, isDir ? null : item.size());
+    private void moveFile(String oldName, String newName) {
+        copy(oldName, newName);
+        deleteFile(oldName);
+    }
+
+    private void moveDirectory(String oldPath, String newPath) {
+        List<ResourceItem> resourceItemList = findAllByPrefix(oldPath);
+        createDirectory(newPath);
+        for (ResourceItem resourceItem : resourceItemList) {
+            String oldObjectPath = resourceItem.objectName();
+            String newObjectPath = oldObjectPath.replace(oldPath, newPath);
+            copy(oldObjectPath, newObjectPath);
+        }
+        deleteDirectory(oldPath);
+    }
+
+    private void copy(String oldPath, String newPath) {
+        try {
+            minioClient.copyObject(
+                    CopyObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(newPath)
+                            .source(
+                                    SourceObject.builder()
+                                            .bucket(bucketName)
+                                            .object(oldPath)
+                                            .build()
+                            )
+                            .build()
+            );
+        } catch (MinioException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void createSubdirectories(String objectPath) {
+        List<String> resources = Arrays.stream(objectPath.split(SEPARATOR_SIGN)).toList();
+        StringBuilder pathBuilder = new StringBuilder();
+        for (int i = 0; i < resources.size() - 1; i++) {
+            pathBuilder.append(resources.get(i)).append(SEPARATOR_SIGN);
+            String directoryPath = pathBuilder.toString();
+            if (findDirectory(directoryPath).isEmpty()) {
+                createDirectory(directoryPath);
+            }
+        }
+    }
+
+    private ResourceItem convert(Item item) {
+        String path = item.objectName();
+        boolean isDir = isDirectory(path) || item.isDir();
+        return new ResourceItem(path, isDir, isDir ? null : item.size());
+    }
+
+    private boolean isDirectory(String objectPath) {
+        return objectPath.endsWith(SEPARATOR_SIGN);
     }
 }
