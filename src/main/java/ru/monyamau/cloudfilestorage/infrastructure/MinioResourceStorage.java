@@ -86,7 +86,7 @@ public class MinioResourceStorage implements ResourceStorage {
             }
             return itemList;
         } catch (MinioException e) {
-            throw new ResourceStorageException("Возникла ошибка при попытке поиска по префиксу",e);
+            throw new ResourceStorageException("Возникла ошибка при попытке поиска по префиксу", e);
         }
     }
 

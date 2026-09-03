@@ -80,7 +80,7 @@ public class ResourceService {
             return new ResponseResourceDto("", "", null, ResourceType.DIRECTORY);
         }
         ResourceItem resource = resourceStorage.findResource(path.getFullPath())
-                .orElseThrow(() -> new ResourceNotFoundException("Ресурс с текущим именем не найден: " + resourceDto.path()));
+                .orElseThrow(() -> new ResourceNotFoundException("Ресурс с текущим именем не найден: " + path.path()));
         return resourceItemMapper.toDto(resource);
     }
 
