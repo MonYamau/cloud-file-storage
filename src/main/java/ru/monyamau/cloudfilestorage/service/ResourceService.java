@@ -1,5 +1,6 @@
 package ru.monyamau.cloudfilestorage.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,6 +16,7 @@ import ru.monyamau.cloudfilestorage.exception.ResourceAlreadyExistsException;
 import ru.monyamau.cloudfilestorage.exception.ResourceNotFoundException;
 import ru.monyamau.cloudfilestorage.handler.UserContext;
 import ru.monyamau.cloudfilestorage.infrastructure.ResourceStorage;
+import ru.monyamau.cloudfilestorage.mapper.ResourceItemMapper;
 import ru.monyamau.cloudfilestorage.util.ArchiveUtil;
 
 import java.io.ByteArrayOutputStream;
@@ -31,10 +33,13 @@ public class ResourceService {
 
     private final ResourceStorage resourceStorage;
     private final UserContext userContext;
+    private final ResourceItemMapper resourceItemMapper;
 
-    public ResourceService(ResourceStorage resourceStorage, UserContext userContext) {
+    @Autowired
+    public ResourceService(ResourceStorage resourceStorage, UserContext userContext, ResourceItemMapper resourceItemMapper) {
         this.resourceStorage = resourceStorage;
         this.userContext = userContext;
+        this.resourceItemMapper = resourceItemMapper;
     }
 
     @EventListener
@@ -52,7 +57,7 @@ public class ResourceService {
         List<ResponseResourceDto> result = new ArrayList<>();
         List<ResourceItem> resources = resourceStorage.findAllFromDirectory(path.getFullPath());
         for (ResourceItem resource : resources) {
-            ResponseResourceDto converted = convert(resource);
+            ResponseResourceDto converted = resourceItemMapper.toDto(resource);
             if (personalDirectoryName.equals(converted.name())) continue;
             result.add(converted);
         }
@@ -66,7 +71,7 @@ public class ResourceService {
         resourceStorage.createDirectory(path.getFullPath());
         ResourceItem item = resourceStorage.findResource(path.getFullPath())
                 .orElseThrow(() -> new IllegalStateException("Ошибка создания директории: не удалось найти ресурс"));
-        return convert(item);
+        return resourceItemMapper.toDto(item);
     }
 
     public ResponseResourceDto findResource(RequestResourceDto resourceDto) {
@@ -76,7 +81,7 @@ public class ResourceService {
         }
         ResourceItem resource = resourceStorage.findResource(path.getFullPath())
                 .orElseThrow(() -> new ResourceNotFoundException("Ресурс с текущим именем не найден: " + resourceDto.path()));
-        return convert(resource);
+        return resourceItemMapper.toDto(resource);
     }
 
     public List<ResponseResourceDto> searchResource(RequestQueryDto queryDto) {
@@ -84,7 +89,7 @@ public class ResourceService {
         List<ResponseResourceDto> result = new ArrayList<>();
         List<ResourceItem> resources = resourceStorage.findAllByPrefix(formatPersonalDirectory());
         for (ResourceItem resource : resources) {
-            ResponseResourceDto converted = convert(resource);
+            ResponseResourceDto converted = resourceItemMapper.toDto(resource);
             if (personalDirectoryName.equals(converted.name())) continue;
             if (matchQueryWithLowerCase(converted.name(), queryDto.query())) {
                 result.add(converted);
@@ -107,7 +112,7 @@ public class ResourceService {
             checkNonexistenceOfResource(path.getFullPath() + filename);
         }
         List<ResourceItem> resourceItemList = uploadFiles(path.getFullPath(), uploadDto.files());
-        return resourceItemList.stream().map(this::convert).toList();
+        return resourceItemList.stream().map(resourceItemMapper::toDto).toList();
     }
 
     public ResponseResourceDto changeResource(RequestMovementDto movementDto) {
@@ -120,7 +125,7 @@ public class ResourceService {
         resourceStorage.moveResource(oldPath.getFullPath(), newPath.getFullPath());
         ResourceItem resourceItem = resourceStorage.findResource(newPath.getFullPath()).orElseThrow(
                 () -> new IllegalStateException("Ошибка перемещения/переименования: не удалось найти ресурс"));
-        return convert(resourceItem);
+        return resourceItemMapper.toDto(resourceItem);
     }
 
     public ResponseDownloadDto downloadResource(RequestResourceDto resourceDto) {
@@ -190,24 +195,6 @@ public class ResourceService {
 
     private boolean isResourceExists(String path) {
         return resourceStorage.findResource(path).isPresent();
-    }
-
-    private ResponseResourceDto convert(ResourceItem item) {
-        String[] resources = item.objectName().split(SEPARATOR_SIGN);
-        String path = collectPathWithoutPersonalDirectory(resources);
-        String name = resources[resources.length - 1];
-        if (item.objectName().endsWith(SEPARATOR_SIGN) || item.isDir()) {
-            return new ResponseResourceDto(path, name, null, ResourceType.DIRECTORY);
-        }
-        return new ResponseResourceDto(path, name, item.size(), ResourceType.FILE);
-    }
-
-    private String collectPathWithoutPersonalDirectory(String[] resources) {
-        StringBuilder path = new StringBuilder();
-        for (int i = 1; i < resources.length - 1; i++) {
-            path.append(resources[i]).append(SEPARATOR_SIGN);
-        }
-        return path.toString();
     }
 
     private boolean matchQueryWithLowerCase(String name, String query) {

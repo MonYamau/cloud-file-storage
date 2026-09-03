@@ -15,6 +15,7 @@ ext {
   springVersion = '7.0.8'
   springDataVersion = '2026.0.0'
   lombokVersion = '1.18.46'
+  mapstructVersion = '1.6.3'
 }
 
 sourceCompatibility = '21'
@@ -33,6 +34,7 @@ dependencies {
   runtimeOnly "io.lettuce:lettuce-core:7.6.0.RELEASE"
   runtimeOnly "org.hibernate.validator:hibernate-validator:9.1.3.Final"
 
+  implementation "org.mapstruct:mapstruct:${mapstructVersion}"
   implementation "io.minio:minio:9.0.3"
   implementation "org.hibernate.orm:hibernate-core:7.4.4.Final"
   implementation "org.springframework:spring-webmvc"
@@ -42,8 +44,10 @@ dependencies {
   implementation "org.mindrot:jbcrypt:0.4"
   implementation "jakarta.validation:jakarta.validation-api:3.1.1"
 
+
   compileOnly "org.projectlombok:lombok:${lombokVersion}"
   annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+  annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 
   testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
