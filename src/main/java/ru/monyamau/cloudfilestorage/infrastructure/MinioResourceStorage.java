@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.monyamau.cloudfilestorage.domain.ResourceItem;
+import ru.monyamau.cloudfilestorage.exception.ResourceStorageException;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -65,7 +66,7 @@ public class MinioResourceStorage implements ResourceStorage {
                             .build()
             );
         } catch (MinioException e) {
-            throw new RuntimeException(e);
+            throw new ResourceStorageException("Возникла ошибка при попытке создания директории", e);
         }
     }
 
@@ -85,7 +86,7 @@ public class MinioResourceStorage implements ResourceStorage {
             }
             return itemList;
         } catch (MinioException e) {
-            throw new RuntimeException(e);
+            throw new ResourceStorageException("Возникла ошибка при попытке поиска по префиксу",e);
         }
     }
 
@@ -105,7 +106,7 @@ public class MinioResourceStorage implements ResourceStorage {
             }
             return itemList;
         } catch (MinioException e) {
-            throw new RuntimeException(e);
+            throw new ResourceStorageException("Возникла ошибка при попытке поиска по директории", e);
         }
     }
 
@@ -122,7 +123,7 @@ public class MinioResourceStorage implements ResourceStorage {
             );
             return objectWriteResponse.object();
         } catch (MinioException e) {
-            throw new RuntimeException(e);
+            throw new ResourceStorageException("Возникла ошибка при попытке сохранения ресурса", e);
         }
     }
 
@@ -135,7 +136,7 @@ public class MinioResourceStorage implements ResourceStorage {
                             .build()
             );
         } catch (MinioException e) {
-            throw new RuntimeException(e);
+            throw new ResourceStorageException("Возникла ошибка при попытке загрузки ресурса", e);
         }
     }
 
@@ -152,9 +153,9 @@ public class MinioResourceStorage implements ResourceStorage {
             if (e.errorResponse().code().equals(NOT_FOUND_RESOURCE)) {
                 return Optional.empty();
             }
-            throw new RuntimeException(e);
+            throw new ResourceStorageException("Возникла ошибка при попытке поиска файла", e);
         } catch (MinioException e) {
-            throw new RuntimeException(e);
+            throw new ResourceStorageException("Возникла ошибка при попытке поиска файла", e);
         }
     }
 
@@ -173,7 +174,7 @@ public class MinioResourceStorage implements ResourceStorage {
             }
             return Optional.empty();
         } catch (MinioException e) {
-            throw new RuntimeException(e);
+            throw new ResourceStorageException("Возникла ошибка при попытке поиска директории", e);
         }
     }
 
@@ -186,7 +187,7 @@ public class MinioResourceStorage implements ResourceStorage {
                             .build()
             );
         } catch (MinioException e) {
-            throw new RuntimeException(e);
+            throw new ResourceStorageException("Возникла ошибка при попытке удаления файла", e);
         }
     }
 
@@ -209,7 +210,7 @@ public class MinioResourceStorage implements ResourceStorage {
                 }
             }
         } catch (MinioException e) {
-            throw new RuntimeException(e);
+            throw new ResourceStorageException("Возникла ошибка при попытке удаления директории", e);
         }
     }
 
@@ -244,7 +245,7 @@ public class MinioResourceStorage implements ResourceStorage {
                             .build()
             );
         } catch (MinioException e) {
-            throw new RuntimeException(e);
+            throw new ResourceStorageException("Возникла ошибка при попытке перемещения ресурса", e);
         }
     }
 

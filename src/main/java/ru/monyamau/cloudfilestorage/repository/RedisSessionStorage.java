@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
+import ru.monyamau.cloudfilestorage.exception.SessionStorageException;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -21,7 +22,7 @@ public class RedisSessionStorage implements SessionStorage {
         try {
             redisTemplate.opsForValue().set(key, value, Duration.ofMinutes(ttlMin));
         } catch (DataAccessException e) {
-            throw new RuntimeException();
+            throw new SessionStorageException("Возникла ошибка при попытке создать сессию", e);
         }
     }
 
@@ -29,7 +30,7 @@ public class RedisSessionStorage implements SessionStorage {
         try {
             return Optional.ofNullable(redisTemplate.opsForValue().get(key));
         } catch (DataAccessException e) {
-            throw new RuntimeException();
+            throw new SessionStorageException("Возникла ошибка при попытке найти сессию", e);
         }
     }
 
@@ -37,7 +38,7 @@ public class RedisSessionStorage implements SessionStorage {
         try {
             redisTemplate.delete(key);
         } catch (DataAccessException e) {
-            throw new RuntimeException();
+            throw new SessionStorageException("Возникла ошибка при попытке удалить сессию", e);
         }
     }
 }
