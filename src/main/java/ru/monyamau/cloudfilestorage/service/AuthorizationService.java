@@ -3,6 +3,7 @@ package ru.monyamau.cloudfilestorage.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.monyamau.cloudfilestorage.dto.event.UserRegistrationEventDto;
 import ru.monyamau.cloudfilestorage.dto.request.RequestUserDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseUserDto;
@@ -29,6 +30,7 @@ public class AuthorizationService {
         this.eventPublisher = eventPublisher;
     }
 
+    @Transactional
     public ResponseUserDto registerUser(UUID uuid, RequestUserDto userDto, int ttlMin) {
         if (userRepository.existsUserByName(userDto.username())) {
             throw new UserAlreadyExistsException("Ошибка уникальности: пользователь с этим именем уже существует");

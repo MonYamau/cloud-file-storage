@@ -1,8 +1,9 @@
 package ru.monyamau.cloudfilestorage.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.multipart.MultipartFile;
 import ru.monyamau.cloudfilestorage.domain.ResourceItem;
 import ru.monyamau.cloudfilestorage.domain.ResourcePath;
@@ -42,7 +43,7 @@ public class ResourceService {
         this.resourceItemMapper = resourceItemMapper;
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void createPersonalDirectory(UserRegistrationEventDto eventDto) {
         String directoryName = PERSONAL_DIRECTORY_NAME.formatted(eventDto.userId());
         if (resourceStorage.findResource(directoryName).isEmpty()) {
