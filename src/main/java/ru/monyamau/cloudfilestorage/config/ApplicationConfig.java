@@ -21,14 +21,10 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
-import java.util.Properties;
 
 @Configuration
 @ComponentScan("ru.monyamau.cloudfilestorage")
-@PropertySource({"classpath:db.properties",
-        "classpath:hibernate.properties",
-        "classpath:redis.properties",
-        "classpath:minio.properties"})
+@PropertySource({"classpath:application.properties"})
 @EnableJpaRepositories("ru.monyamau.cloudfilestorage.repository")
 @EnableTransactionManagement
 public class ApplicationConfig {
@@ -42,17 +38,11 @@ public class ApplicationConfig {
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName(env.getRequiredProperty("db.driver_class"));
-        dataSource.setUrl(env.getRequiredProperty("db.url"));
-        dataSource.setUsername(env.getRequiredProperty("db.username"));
-        dataSource.setPassword(env.getRequiredProperty("db.password"));
+        dataSource.setDriverClassName(env.getRequiredProperty("mysql.driver_class"));
+        dataSource.setUrl(env.getRequiredProperty("mysql.url"));
+        dataSource.setUsername(env.getRequiredProperty("mysql.username"));
+        dataSource.setPassword(env.getRequiredProperty("mysql.password"));
         return dataSource;
-    }
-
-    public Properties hibernateProperties() {
-        Properties properties = new Properties();
-        properties.put("hibernate.show_sql", env.getRequiredProperty("hibernate.show_sql"));
-        return properties;
     }
 
     @Bean
@@ -77,7 +67,6 @@ public class ApplicationConfig {
         managerFactoryBean.setDataSource(dataSource());
         managerFactoryBean.setPackagesToScan("ru.monyamau.cloudfilestorage.entity");
         managerFactoryBean.setJpaVendorAdapter(vendorAdapter);
-        managerFactoryBean.setJpaProperties(hibernateProperties());
         return managerFactoryBean;
     }
 
