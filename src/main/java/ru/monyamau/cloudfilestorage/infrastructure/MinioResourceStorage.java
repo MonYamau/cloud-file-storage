@@ -206,7 +206,8 @@ public class MinioResourceStorage implements ResourceStorage {
             );
             for (Result<Error> errorResult : results) {
                 if (errorResult.get() != null) {
-                    throw new RuntimeException(errorResult.get().message());
+                    throw new ResourceStorageException("Возникла ошибка при попытке удаления директории",
+                            new Throwable(errorResult.get().message()));
                 }
             }
         } catch (MinioException e) {
