@@ -1,6 +1,8 @@
 package ru.monyamau.cloudfilestorage.config;
 
 import io.minio.MinioClient;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
 import jakarta.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -81,5 +83,11 @@ public class ApplicationConfig {
                 .credentials(env.getRequiredProperty("minio.access_key"), env.getRequiredProperty("minio.secret_key"))
                 .endpoint(env.getRequiredProperty("minio.endpoint"))
                 .build();
+    }
+
+    @Bean
+    public OpenAPI openAPI() {
+        return new OpenAPI().info(new Info().title("Cloud file storage API")
+                .version("1.0.0"));
     }
 }
