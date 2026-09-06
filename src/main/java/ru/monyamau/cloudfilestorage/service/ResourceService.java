@@ -43,7 +43,7 @@ public class ResourceService {
         this.resourceItemMapper = resourceItemMapper;
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void createPersonalDirectory(UserRegistrationEventDto eventDto) {
         String directoryName = PERSONAL_DIRECTORY_NAME.formatted(eventDto.userId());
         if (resourceStorage.findResource(directoryName).isEmpty()) {
