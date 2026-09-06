@@ -8,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.monyamau.cloudfilestorage.domain.ResourceItem;
 import ru.monyamau.cloudfilestorage.domain.ResourcePath;
 import ru.monyamau.cloudfilestorage.domain.ResourceType;
-import ru.monyamau.cloudfilestorage.dto.event.UserRegistrationEventDto;
 import ru.monyamau.cloudfilestorage.dto.request.*;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseDownloadDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
