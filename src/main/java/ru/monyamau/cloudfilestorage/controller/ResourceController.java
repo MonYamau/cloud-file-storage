@@ -31,7 +31,7 @@ public class ResourceController implements ResourceApi {
     }
 
     @Override
-    public ResponseEntity<HttpStatus> delete(RequestResourceDto requestDto) {
+    public ResponseEntity<Void> delete(RequestResourceDto requestDto) {
         resourceService.deleteResource(requestDto);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,5 +37,5 @@ public interface AuthorizationApi {
     @ApiResponse(responseCode = "204", description = "Успешная деавторизация")
     @ApiResponse(responseCode = "401", description = "Пользователь неавторизован", content = @Content)
     @ApiResponse(responseCode = "500", description = "Ошибка на стороне сервера", content = @Content)
-    ResponseEntity<HttpStatus> signOut(HttpServletRequest request);
+    ResponseEntity<Void> signOut(HttpServletRequest request);
 }

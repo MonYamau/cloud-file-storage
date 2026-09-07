@@ -51,7 +51,7 @@ public class AuthorizationController implements AuthorizationApi {
     }
 
     @Override
-    public ResponseEntity<HttpStatus> signOut(HttpServletRequest request) {
+    public ResponseEntity<Void> signOut(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         Cookie cookie = CookieUtil.findSessionId(cookies)
                 .orElseThrow(() -> new AuthenticationException("Ошибка аутентификации: не выполнен вход пользователем"));

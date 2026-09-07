@@ -35,7 +35,7 @@ public interface ResourceApi {
     @ApiResponse(responseCode = "401", description = "Пользователь неавторизован", content = @Content)
     @ApiResponse(responseCode = "404", description = "Ресурс не найден", content = @Content)
     @ApiResponse(responseCode = "500", description = "Ошибка на стороне сервера", content = @Content)
-    ResponseEntity<HttpStatus> delete(@Valid @ModelAttribute(name = "path") RequestResourceDto requestDto);
+    ResponseEntity<Void> delete(@Valid @ModelAttribute(name = "path") RequestResourceDto requestDto);
 
     @GetMapping("/download")
     @Operation(summary = "Скачать ресурс из хранилища")
