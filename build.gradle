@@ -16,6 +16,7 @@ ext {
   springDataVersion = '2026.0.0'
   lombokVersion = '1.18.46'
   mapstructVersion = '1.6.3'
+  flywayVersion = '13.5.0'
 }
 
 sourceCompatibility = '21'
@@ -44,7 +45,8 @@ dependencies {
   implementation "com.fasterxml.jackson.core:jackson-databind:2.22.1"
   implementation "org.mindrot:jbcrypt:0.4"
   implementation "jakarta.validation:jakarta.validation-api:3.1.1"
-
+  implementation "org.flywaydb:flyway-core:${flywayVersion}"
+  implementation "org.flywaydb:flyway-mysql:${flywayVersion}"
 
   compileOnly "org.projectlombok:lombok:${lombokVersion}"
   annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
