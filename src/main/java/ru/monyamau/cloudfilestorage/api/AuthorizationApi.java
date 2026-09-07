@@ -22,6 +22,7 @@ public interface AuthorizationApi {
     @ApiResponse(responseCode = "400", description = "Ошибка валидации входных параметров", content = @Content)
     @ApiResponse(responseCode = "409", description = "Пользователь с данным именем уже существует", content = @Content)
     @ApiResponse(responseCode = "500", description = "Ошибка на стороне сервера", content = @Content)
+    @SecurityRequirements
     ResponseEntity<ResponseUserDto> signUp(@Valid @RequestBody RequestUserDto requestDto);
 
     @PostMapping("/sign-in")
@@ -30,6 +31,7 @@ public interface AuthorizationApi {
     @ApiResponse(responseCode = "400", description = "Ошибка валидации входных параметров", content = @Content)
     @ApiResponse(responseCode = "401", description = "Неверное имя пользователя или пароль", content = @Content)
     @ApiResponse(responseCode = "500", description = "Ошибка на стороне сервера", content = @Content)
+    @SecurityRequirements
     ResponseEntity<ResponseUserDto> signIn(@Valid @RequestBody RequestUserDto requestDto);
 
     @PostMapping("/sign-out")

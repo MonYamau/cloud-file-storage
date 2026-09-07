@@ -1,8 +1,11 @@
 package ru.monyamau.cloudfilestorage.config;
 
 import io.minio.MinioClient;
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import jakarta.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +33,8 @@ import javax.sql.DataSource;
 @EnableJpaRepositories("ru.monyamau.cloudfilestorage.repository")
 @EnableTransactionManagement
 public class ApplicationConfig {
+    private final static String COOKIE_NAME = "SESSION_ID";
+
     private final Environment env;
 
     @Autowired
@@ -87,7 +92,15 @@ public class ApplicationConfig {
 
     @Bean
     public OpenAPI openAPI() {
-        return new OpenAPI().info(new Info().title("Cloud file storage API")
-                .version("1.0.0"));
+        return new OpenAPI().info(new Info()
+                        .title("Cloud file storage API")
+                        .version("1.0.0"))
+                .components(new Components()
+                        .addSecuritySchemes("cookie_authentication", new SecurityScheme()
+                                .type(SecurityScheme.Type.APIKEY)
+                                .in(SecurityScheme.In.COOKIE)
+                                .name(COOKIE_NAME)))
+                .addSecurityItem(new SecurityRequirement()
+                        .addList("cookie_authentication"));
     }
 }
