@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.monyamau.cloudfilestorage.dto.request.RequestMovementDto;
@@ -39,7 +39,8 @@ public interface ResourceApi {
 
     @GetMapping("/download")
     @Operation(summary = "Скачать ресурс из хранилища")
-    @ApiResponse(responseCode = "200", description = "Успешная загрузка ресурса")
+    @ApiResponse(responseCode = "200", description = "Успешная загрузка ресурса",
+            content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE))
     @ApiResponse(responseCode = "400", description = "Ошибка валидации входных параметров", content = @Content)
     @ApiResponse(responseCode = "401", description = "Пользователь неавторизован", content = @Content)
     @ApiResponse(responseCode = "404", description = "Ресурс не найден", content = @Content)
@@ -64,7 +65,7 @@ public interface ResourceApi {
     @ApiResponse(responseCode = "500", description = "Ошибка на стороне сервера", content = @Content)
     ResponseEntity<List<ResponseResourceDto>> search(@Valid @ModelAttribute(name = "query") RequestQueryDto requestDto);
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Сохранить ресурс в хранилище")
     @ApiResponse(responseCode = "201", description = "Успешное сохранение ресурса")
     @ApiResponse(responseCode = "400", description = "Ошибка валидации входных параметров", content = @Content)
