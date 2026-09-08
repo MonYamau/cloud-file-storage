@@ -16,13 +16,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class AuthorizationService {
+public class AuthenticationService {
     private final UserRepository userRepository;
     private final SessionStorage sessionStorage;
     private final TransactionTemplate transactionTemplate;
 
     @Autowired
-    public AuthorizationService(UserRepository userRepository, SessionStorage sessionStorage, TransactionTemplate transactionTemplate) {
+    public AuthenticationService(UserRepository userRepository, SessionStorage sessionStorage, TransactionTemplate transactionTemplate) {
         this.userRepository = userRepository;
         this.sessionStorage = sessionStorage;
         this.transactionTemplate = transactionTemplate;
@@ -41,7 +41,7 @@ public class AuthorizationService {
         return new ResponseUserDto(savedUser.getName());
     }
 
-    public ResponseUserDto authorizeUser(String key, RequestUserDto userDto, int ttlMin) {
+    public ResponseUserDto authenticateUser(String key, RequestUserDto userDto, int ttlMin) {
         Optional<User> user = userRepository.getUserByName(userDto.username());
         if (user.isPresent()) {
             User currentUser = user.get();

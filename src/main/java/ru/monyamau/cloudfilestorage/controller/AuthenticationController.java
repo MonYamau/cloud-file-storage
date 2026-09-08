@@ -8,23 +8,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import ru.monyamau.cloudfilestorage.api.AuthorizationApi;
+import ru.monyamau.cloudfilestorage.api.AuthenticationApi;
 import ru.monyamau.cloudfilestorage.dto.request.RequestUserDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseUserDto;
 import ru.monyamau.cloudfilestorage.exception.AuthenticationException;
-import ru.monyamau.cloudfilestorage.service.AuthorizationService;
+import ru.monyamau.cloudfilestorage.service.AuthenticationService;
 import ru.monyamau.cloudfilestorage.util.CookieUtil;
 
 import java.util.UUID;
 
 @RestController
-public class AuthorizationController implements AuthorizationApi {
+public class AuthenticationController implements AuthenticationApi {
     private final static int TTL_MINUTES = 30;
 
-    private final AuthorizationService authService;
+    private final AuthenticationService authService;
 
     @Autowired
-    public AuthorizationController(AuthorizationService authService) {
+    public AuthenticationController(AuthenticationService authService) {
         this.authService = authService;
     }
 
@@ -42,7 +42,7 @@ public class AuthorizationController implements AuthorizationApi {
     @Override
     public ResponseEntity<ResponseUserDto> signIn(RequestUserDto requestDto) {
         String sessionId = String.valueOf(UUID.randomUUID());
-        ResponseUserDto userDto = authService.authorizeUser(sessionId, requestDto, TTL_MINUTES);
+        ResponseUserDto userDto = authService.authenticateUser(sessionId, requestDto, TTL_MINUTES);
         ResponseCookie cookie = CookieUtil.create(sessionId, TTL_MINUTES);
         return ResponseEntity
                 .status(HttpStatus.OK)

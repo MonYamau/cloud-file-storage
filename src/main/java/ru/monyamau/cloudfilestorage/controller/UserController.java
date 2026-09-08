@@ -9,18 +9,18 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.monyamau.cloudfilestorage.api.UserApi;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseUserDto;
 import ru.monyamau.cloudfilestorage.exception.AuthenticationException;
-import ru.monyamau.cloudfilestorage.service.AuthorizationService;
+import ru.monyamau.cloudfilestorage.service.AuthenticationService;
 import ru.monyamau.cloudfilestorage.util.CookieUtil;
 
 import java.util.UUID;
 
 @RestController
 public class UserController implements UserApi {
-    private final AuthorizationService authorizationService;
+    private final AuthenticationService authenticationService;
 
     @Autowired
-    public UserController(AuthorizationService authorizationService) {
-        this.authorizationService = authorizationService;
+    public UserController(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
     }
 
     @Override
@@ -28,7 +28,7 @@ public class UserController implements UserApi {
         Cookie[] cookies = request.getCookies();
         Cookie cookie = CookieUtil.findSessionId(cookies)
                 .orElseThrow(() -> new AuthenticationException("Ошибка аутентификации: не выполнен вход пользователем"));
-        ResponseUserDto responseDto = authorizationService.findUser(UUID.fromString(cookie.getValue()));
+        ResponseUserDto responseDto = authenticationService.findUser(UUID.fromString(cookie.getValue()));
         return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
 }

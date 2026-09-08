@@ -21,7 +21,7 @@ import ru.monyamau.cloudfilestorage.dto.response.ResponseUserDto;
 
 @RequestMapping("/auth")
 @Tag(name = "Авторизация", description = "Управление доступом пользователя")
-public interface AuthorizationApi {
+public interface AuthenticationApi {
     @PostMapping("/sign-up")
     @Operation(summary = "Зарегистрировать пользователя")
     @ApiResponse(responseCode = "201", description = "Успешная регистрация")
