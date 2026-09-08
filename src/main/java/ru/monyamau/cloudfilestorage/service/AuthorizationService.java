@@ -1,11 +1,9 @@
 package ru.monyamau.cloudfilestorage.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import ru.monyamau.cloudfilestorage.dto.request.RequestUserDto;
-import ru.monyamau.cloudfilestorage.dto.request.UserRegistrationEventDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseUserDto;
 import ru.monyamau.cloudfilestorage.entity.User;
 import ru.monyamau.cloudfilestorage.exception.AuthenticationException;
@@ -21,35 +19,33 @@ import java.util.UUID;
 public class AuthorizationService {
     private final UserRepository userRepository;
     private final SessionStorage sessionStorage;
-    private final ApplicationEventPublisher eventPublisher;
+    private final TransactionTemplate transactionTemplate;
 
     @Autowired
-    public AuthorizationService(UserRepository userRepository, SessionStorage sessionStorage, ApplicationEventPublisher eventPublisher) {
+    public AuthorizationService(UserRepository userRepository, SessionStorage sessionStorage, TransactionTemplate transactionTemplate) {
         this.userRepository = userRepository;
         this.sessionStorage = sessionStorage;
-        this.eventPublisher = eventPublisher;
+        this.transactionTemplate = transactionTemplate;
     }
 
-    @Transactional
-    public ResponseUserDto registerUser(UUID uuid, RequestUserDto userDto, int ttlMin) {
-        if (userRepository.existsUserByName(userDto.username())) {
-            throw new UserAlreadyExistsException("Ошибка уникальности: пользователь с этим именем уже существует");
-        }
-        String hash = PassHashUtil.hash(userDto.password());
-        User savedUser = userRepository.saveAndFlush(new User(userDto.username(), hash));
-        eventPublisher.publishEvent(new UserRegistrationEventDto(savedUser.getId()));
-        String key = String.valueOf(uuid);
+    public ResponseUserDto registerUser(String key, RequestUserDto userDto, int ttlMin) {
+        User savedUser = transactionTemplate.execute(status -> {
+            if (userRepository.existsUserByName(userDto.username())) {
+                throw new UserAlreadyExistsException("Ошибка уникальности: пользователь с этим именем уже существует");
+            }
+            String hash = PassHashUtil.hash(userDto.password());
+            return userRepository.save(new User(userDto.username(), hash));
+        });
         String value = String.valueOf(savedUser.getId());
         sessionStorage.saveWithTtl(key, value, ttlMin);
         return new ResponseUserDto(savedUser.getName());
     }
 
-    public ResponseUserDto authorizeUser(UUID uuid, RequestUserDto userDto, int ttlMin) {
+    public ResponseUserDto authorizeUser(String key, RequestUserDto userDto, int ttlMin) {
         Optional<User> user = userRepository.getUserByName(userDto.username());
         if (user.isPresent()) {
             User currentUser = user.get();
             if (PassHashUtil.check(userDto.password(), currentUser.getPassword())) {
-                String key = String.valueOf(uuid);
                 String value = String.valueOf(currentUser.getId());
                 sessionStorage.saveWithTtl(key, value, ttlMin);
                 return new ResponseUserDto(currentUser.getName());

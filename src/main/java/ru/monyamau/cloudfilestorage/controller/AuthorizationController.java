@@ -30,9 +30,9 @@ public class AuthorizationController implements AuthorizationApi {
 
     @Override
     public ResponseEntity<ResponseUserDto> signUp(RequestUserDto requestDto) {
-        UUID uuid = UUID.randomUUID();
-        ResponseUserDto userDto = authService.registerUser(uuid, requestDto, TTL_MINUTES);
-        ResponseCookie cookie = CookieUtil.create(String.valueOf(uuid), TTL_MINUTES);
+        String sessionId = String.valueOf(UUID.randomUUID());
+        ResponseUserDto userDto = authService.registerUser(sessionId, requestDto, TTL_MINUTES);
+        ResponseCookie cookie = CookieUtil.create(sessionId, TTL_MINUTES);
         return ResponseEntity
                 .status(HttpStatus.CREATED).
                 header(HttpHeaders.SET_COOKIE, cookie.toString())
@@ -41,9 +41,9 @@ public class AuthorizationController implements AuthorizationApi {
 
     @Override
     public ResponseEntity<ResponseUserDto> signIn(RequestUserDto requestDto) {
-        UUID uuid = UUID.randomUUID();
-        ResponseUserDto userDto = authService.authorizeUser(uuid, requestDto, TTL_MINUTES);
-        ResponseCookie cookie = CookieUtil.create(String.valueOf(uuid), TTL_MINUTES);
+        String sessionId = String.valueOf(UUID.randomUUID());
+        ResponseUserDto userDto = authService.authorizeUser(sessionId, requestDto, TTL_MINUTES);
+        ResponseCookie cookie = CookieUtil.create(sessionId, TTL_MINUTES);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())

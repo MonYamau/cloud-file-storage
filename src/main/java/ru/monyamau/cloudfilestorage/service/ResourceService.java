@@ -2,8 +2,6 @@ package ru.monyamau.cloudfilestorage.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.multipart.MultipartFile;
 import ru.monyamau.cloudfilestorage.domain.ResourceItem;
 import ru.monyamau.cloudfilestorage.domain.ResourcePath;
@@ -40,14 +38,6 @@ public class ResourceService {
         this.resourceStorage = resourceStorage;
         this.userContext = userContext;
         this.resourceItemMapper = resourceItemMapper;
-    }
-
-    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
-    public void createPersonalDirectory(UserRegistrationEventDto eventDto) {
-        String directoryName = PERSONAL_DIRECTORY_NAME.formatted(eventDto.userId());
-        if (resourceStorage.findResource(directoryName).isEmpty()) {
-            resourceStorage.createDirectory(directoryName);
-        }
     }
 
     public List<ResponseResourceDto> findAllFromDirectory(RequestDirectoryDto directoryDto) {
@@ -100,6 +90,9 @@ public class ResourceService {
 
     public void deleteResource(RequestResourceDto resourceDto) {
         ResourcePath path = new ResourcePath(formatPersonalDirectory(), resourceDto.path());
+        if (path.isPersonalDirectory()) {
+            throw new InvalidInputException("Ошибка удаления: нельзя удалить пользовательскую директорию");
+        }
         checkExistenceOfResource(path.getFullPath());
         resourceStorage.deleteResource(path.getFullPath());
     }
@@ -194,6 +187,9 @@ public class ResourceService {
     }
 
     private boolean isResourceExists(String path) {
+        if (path.equals(formatPersonalDirectory())) {
+            return true;
+        }
         return resourceStorage.findResource(path).isPresent();
     }
 
