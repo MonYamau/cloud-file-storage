@@ -7,8 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import ru.monyamau.cloudfilestorage.api.annotation.AuthenticationErrorApiResponse;
-import ru.monyamau.cloudfilestorage.api.annotation.ServerErrorApiResponse;
+import ru.monyamau.cloudfilestorage.annotation.AuthenticationErrorApiResponse;
+import ru.monyamau.cloudfilestorage.annotation.ServerErrorApiResponse;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseUserDto;
 
 @RequestMapping("/user")

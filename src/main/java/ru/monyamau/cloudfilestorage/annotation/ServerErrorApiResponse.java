@@ -1,4 +1,4 @@
-package ru.monyamau.cloudfilestorage.api.annotation;
+package ru.monyamau.cloudfilestorage.annotation;
 
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@ApiResponse(responseCode = "401", description = "Пользователь неавторизован",
+@ApiResponse(responseCode = "500", description = "Ошибка на стороне сервера",
         content = @Content(schema = @Schema(implementation = ErrorDto.class)))
-public @interface AuthenticationErrorApiResponse {
+public @interface ServerErrorApiResponse {
 }
