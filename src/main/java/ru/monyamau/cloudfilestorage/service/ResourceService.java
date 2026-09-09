@@ -1,5 +1,7 @@
 package ru.monyamau.cloudfilestorage.service;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ResourceService {
@@ -32,12 +35,14 @@ public class ResourceService {
     private final ResourceStorage resourceStorage;
     private final UserContext userContext;
     private final ResourceItemMapper resourceItemMapper;
+    private final Validator validator;
 
     @Autowired
-    public ResourceService(ResourceStorage resourceStorage, UserContext userContext, ResourceItemMapper resourceItemMapper) {
+    public ResourceService(ResourceStorage resourceStorage, UserContext userContext, ResourceItemMapper resourceItemMapper, Validator validator) {
         this.resourceStorage = resourceStorage;
         this.userContext = userContext;
         this.resourceItemMapper = resourceItemMapper;
+        this.validator = validator;
     }
 
     public List<ResponseResourceDto> findAllFromDirectory(RequestDirectoryDto directoryDto) {
@@ -103,6 +108,7 @@ public class ResourceService {
         checkExistenceOfResource(path.getFullPath());
         for (MultipartFile multipartFile : uploadDto.object()) {
             String filename = multipartFile.getOriginalFilename();
+            validateUploadedFilename(filename);
             checkNonexistenceOfResource(path.getFullPath() + filename);
         }
         List<ResourceItem> resourceItemList = uploadFiles(path.getFullPath(), uploadDto.object());
@@ -171,6 +177,13 @@ public class ResourceService {
         boolean isMovement = !oldParentDirectory.equals(newParentDirectory) && oldName.equals(newName);
         if (!isRenaming && !isMovement) {
             throw new InvalidInputException("Ошибка перемещения/переименования: операция невалидна");
+        }
+    }
+
+    private void validateUploadedFilename(String filename) {
+        Set<ConstraintViolation<RequestResourceDto>> violations = validator.validate(new RequestResourceDto(filename));
+        if (!violations.isEmpty()) {
+            throw new InvalidInputException("Имя загружаемого файла " + filename + " содержит недопустимые символы");
         }
     }
 
