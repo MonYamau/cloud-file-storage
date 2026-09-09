@@ -49,6 +49,7 @@ public class ResourceService {
         for (ResourceItem resource : resources) {
             ResponseResourceDto converted = resourceItemMapper.toDto(resource);
             if (personalDirectoryName.equals(converted.name())) continue;
+            if (path.getResourceName().equals(converted.name())) continue;
             result.add(converted);
         }
         return result;
@@ -100,11 +101,11 @@ public class ResourceService {
     public List<ResponseResourceDto> uploadResource(RequestUploadDto uploadDto) {
         ResourcePath path = new ResourcePath(formatPersonalDirectory(), uploadDto.path());
         checkExistenceOfResource(path.getFullPath());
-        for (MultipartFile multipartFile : uploadDto.files()) {
+        for (MultipartFile multipartFile : uploadDto.object()) {
             String filename = multipartFile.getOriginalFilename();
             checkNonexistenceOfResource(path.getFullPath() + filename);
         }
-        List<ResourceItem> resourceItemList = uploadFiles(path.getFullPath(), uploadDto.files());
+        List<ResourceItem> resourceItemList = uploadFiles(path.getFullPath(), uploadDto.object());
         return resourceItemList.stream().map(resourceItemMapper::toDto).toList();
     }
 
@@ -124,15 +125,16 @@ public class ResourceService {
     public ResponseDownloadDto downloadResource(RequestResourceDto resourceDto) {
         ResourcePath path = new ResourcePath(formatPersonalDirectory(), resourceDto.path());
         checkExistenceOfResource(path.getFullPath());
+        String resourceName = path.isPersonalDirectory() ? "download" : path.getResourceName();
         try {
             if (path.isDirectory()) {
                 List<ResourceItem> resourceItemList = resourceStorage.findAllByPrefix(path.getFullPath());
                 ByteArrayOutputStream outputStream = ArchiveUtil
                         .archiveItemsToZip(resourceItemList, path.getFullPath(), resourceStorage::downloadResource);
-                return new ResponseDownloadDto(path.getResourceName() + ARCHIVE_FORMAT, outputStream.toByteArray());
+                return new ResponseDownloadDto(resourceName + ARCHIVE_FORMAT, outputStream.toByteArray());
             }
             InputStream inputStream = resourceStorage.downloadResource(path.getFullPath());
-            return new ResponseDownloadDto(path.getResourceName(), inputStream.readAllBytes());
+            return new ResponseDownloadDto(resourceName, inputStream.readAllBytes());
         } catch (IOException e) {
             throw new IllegalStateException("Ошибка загрузки: не удалось скачать ресурс", e);
         }
@@ -158,7 +160,7 @@ public class ResourceService {
         if (oldPath.path().equals(newPath.path())) {
             throw new InvalidInputException("Ошибка перемещения/переименования: ресурс уже существует по пути назначения");
         }
-        if (newPath.path().startsWith(oldPath.path())) {
+        if (newPath.path().startsWith(oldPath.path()) && oldPath.isDirectory()) {
             throw new InvalidInputException("Ошибка перемещения/переименования: директорию нельзя перенести в свои поддиректории");
         }
         String oldParentDirectory = oldPath.getParentDirectoryWithoutPersonalDirectory();
