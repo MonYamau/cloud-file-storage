@@ -12,8 +12,6 @@ import ru.monyamau.cloudfilestorage.exception.AuthenticationException;
 import ru.monyamau.cloudfilestorage.service.AuthenticationService;
 import ru.monyamau.cloudfilestorage.util.CookieUtil;
 
-import java.util.UUID;
-
 @RestController
 public class UserController implements UserApi {
     private final AuthenticationService authenticationService;
@@ -28,7 +26,7 @@ public class UserController implements UserApi {
         Cookie[] cookies = request.getCookies();
         Cookie cookie = CookieUtil.findSessionId(cookies)
                 .orElseThrow(() -> new AuthenticationException("Ошибка аутентификации: не выполнен вход пользователем"));
-        ResponseUserDto responseDto = authenticationService.findUser(UUID.fromString(cookie.getValue()));
+        ResponseUserDto responseDto = authenticationService.findUser(cookie.getValue());
         return new ResponseEntity<>(responseDto, HttpStatus.OK);
     }
 }

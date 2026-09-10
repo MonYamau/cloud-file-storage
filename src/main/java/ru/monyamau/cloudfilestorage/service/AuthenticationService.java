@@ -13,7 +13,6 @@ import ru.monyamau.cloudfilestorage.repository.UserRepository;
 import ru.monyamau.cloudfilestorage.util.PassHashUtil;
 
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class AuthenticationService {
@@ -58,8 +57,8 @@ public class AuthenticationService {
         sessionStorage.delete(key);
     }
 
-    public ResponseUserDto findUser(UUID uuid) {
-        String userId = sessionStorage.findBy(String.valueOf(uuid))
+    public ResponseUserDto findUser(String key) {
+        String userId = sessionStorage.findBy(key)
                 .orElseThrow(() -> new AuthenticationException("Ошибка аутентификации: не удалось найти актуальную сессию"));
         int id = Integer.parseInt(userId);
         User user = userRepository.findUserById(id)
