@@ -1,6 +1,9 @@
 package ru.monyamau.cloudfilestorage.config;
 
+import io.minio.BucketExistsArgs;
+import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.errors.MinioException;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -110,10 +113,20 @@ public class ApplicationConfig {
 
     @Bean
     public MinioClient minioClient() {
-        return MinioClient.builder()
+        MinioClient minioClient = MinioClient.builder()
                 .credentials(env.getRequiredProperty("minio.access_key"), env.getRequiredProperty("minio.secret_key"))
                 .endpoint(env.getRequiredProperty("minio.endpoint"))
                 .build();
+        try {
+            String bucketName = env.getRequiredProperty("minio.bucket-name");
+            boolean existsBucket = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
+            if (!existsBucket) {
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+            }
+        } catch (MinioException e) {
+            throw new IllegalStateException("Не удалось создать бакет minIO");
+        }
+        return minioClient;
     }
 
     @Bean
