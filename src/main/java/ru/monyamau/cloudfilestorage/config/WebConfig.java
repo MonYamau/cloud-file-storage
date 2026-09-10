@@ -1,13 +1,17 @@
 package ru.monyamau.cloudfilestorage.config;
 
 import org.jspecify.annotations.Nullable;
+import org.springdoc.core.configuration.SpringDocConfiguration;
+import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
+import org.springdoc.webmvc.core.configuration.SpringDocWebMvcConfiguration;
+import org.springdoc.webmvc.ui.SwaggerConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.validation.Validator;
-import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -18,16 +22,25 @@ import ru.monyamau.cloudfilestorage.handler.SessionInterceptor;
 
 @Configuration
 @EnableWebMvc
-@ComponentScan(basePackages = {
-        "ru.monyamau.cloudfilestorage",
-        "org.springdoc"
+@ComponentScan(basePackages = "ru.monyamau.cloudfilestorage")
+@Import({
+        SpringDocConfiguration.class,
+        SpringDocWebMvcConfiguration.class,
+        SwaggerConfig.class
 })
 public class WebConfig implements WebMvcConfigurer {
     private final SessionInterceptor sessionInterceptor;
+    private final Validator validator;
 
     @Autowired
-    public WebConfig(SessionInterceptor sessionInterceptor) {
+    public WebConfig(SessionInterceptor sessionInterceptor, Validator validator) {
         this.sessionInterceptor = sessionInterceptor;
+        this.validator = validator;
+    }
+
+    @Bean
+    public SpringDocConfigProperties springDocConfigProperties() {
+        return new SpringDocConfigProperties();
     }
 
     @Bean
@@ -35,14 +48,9 @@ public class WebConfig implements WebMvcConfigurer {
         return new StandardServletMultipartResolver();
     }
 
-    @Bean
-    public LocalValidatorFactoryBean validatorFactoryBean() {
-        return new LocalValidatorFactoryBean();
-    }
-
     @Override
     public @Nullable Validator getValidator() {
-        return validatorFactoryBean();
+        return validator;
     }
 
     @Override
