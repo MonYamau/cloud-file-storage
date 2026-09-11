@@ -1,9 +1,9 @@
 package ru.monyamau.cloudfilestorage.config;
 
-import org.jspecify.annotations.Nullable;
 import org.springdoc.core.configuration.SpringDocConfiguration;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
+import org.springdoc.core.properties.SwaggerUiOAuthProperties;
 import org.springdoc.webmvc.core.configuration.SpringDocWebMvcConfiguration;
 import org.springdoc.webmvc.ui.SwaggerConfig;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.validation.Validator;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
@@ -30,12 +29,10 @@ import ru.monyamau.cloudfilestorage.handler.SessionInterceptor;
 })
 public class WebConfig implements WebMvcConfigurer {
     private final SessionInterceptor sessionInterceptor;
-    private final Validator validator;
 
     @Autowired
-    public WebConfig(SessionInterceptor sessionInterceptor, Validator validator) {
+    public WebConfig(SessionInterceptor sessionInterceptor) {
         this.sessionInterceptor = sessionInterceptor;
-        this.validator = validator;
     }
 
     @Bean
@@ -46,11 +43,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Bean
     public MultipartResolver multipartResolver() {
         return new StandardServletMultipartResolver();
-    }
-
-    @Override
-    public @Nullable Validator getValidator() {
-        return validator;
     }
 
     @Override
@@ -74,5 +66,10 @@ public class WebConfig implements WebMvcConfigurer {
         configProperties.setUrl("/api/v3/api-docs");
         configProperties.setConfigUrl("/api/v3/api-docs/swagger-config");
         return configProperties;
+    }
+
+    @Bean
+    public SwaggerUiOAuthProperties swaggerUiOAuthProperties() {
+        return new SwaggerUiOAuthProperties();
     }
 }
