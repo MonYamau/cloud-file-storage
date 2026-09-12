@@ -99,7 +99,7 @@ public class ResourceServiceTest extends BaseContextTest {
         userContext.setUserId(6);
         resourceService.createDirectory(new RequestDirectoryDto("a/"));
         Assertions.assertThrows(InvalidInputException.class,
-                ()-> resourceService.deleteResource(new RequestResourceDto("/")));
+                () -> resourceService.deleteResource(new RequestResourceDto("/")));
     }
 
     @Test
