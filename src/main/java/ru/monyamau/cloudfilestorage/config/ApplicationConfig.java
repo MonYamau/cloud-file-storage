@@ -38,7 +38,7 @@ import javax.sql.DataSource;
                 classes = WebConfig.class
         )
 )
-@PropertySource({"classpath:application.properties"})
+@PropertySource({"classpath:application-${spring.profiles.active:dev}.properties"})
 @EnableJpaRepositories("ru.monyamau.cloudfilestorage.repository")
 @EnableTransactionManagement
 public class ApplicationConfig {

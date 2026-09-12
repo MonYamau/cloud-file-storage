@@ -4,7 +4,7 @@ services:
     container_name: cloud_storage_mysql
     restart: always
     env_file:
-      - src/main/resources/application.properties
+      - src/main/resources/application-dev.properties
     ports:
       - "3306:3306"
     volumes:
@@ -26,7 +26,7 @@ services:
     restart: always
     command: server /data --console-address ":9001"
     env_file:
-      - src/main/resources/application.properties
+      - src/main/resources/application-dev.properties
     ports:
       - "9000:9000"
       - "9001:9001"
