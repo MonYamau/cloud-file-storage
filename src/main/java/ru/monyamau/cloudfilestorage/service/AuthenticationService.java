@@ -1,5 +1,6 @@
 package ru.monyamau.cloudfilestorage.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -14,6 +15,7 @@ import ru.monyamau.cloudfilestorage.util.PassHashUtil;
 
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class AuthenticationService {
     private final UserRepository userRepository;
@@ -30,13 +32,14 @@ public class AuthenticationService {
     public ResponseUserDto registerUser(String key, RequestUserDto userDto, int ttlMin) {
         User savedUser = transactionTemplate.execute(status -> {
             if (userRepository.existsUserByName(userDto.username())) {
-                throw new UserAlreadyExistsException("Ошибка уникальности: пользователь с этим именем уже существует");
+                throw new UserAlreadyExistsException("Ошибка уникальности: пользователь с именем " + userDto.username() + " уже существует");
             }
             String hash = PassHashUtil.hash(userDto.password());
             return userRepository.save(new User(userDto.username(), hash));
         });
         String value = String.valueOf(savedUser.getId());
         sessionStorage.saveWithTtl(key, value, ttlMin);
+        log.info("Register user with Id:{}", savedUser.getId());
         return new ResponseUserDto(savedUser.getName());
     }
 
@@ -47,6 +50,7 @@ public class AuthenticationService {
             if (PassHashUtil.check(userDto.password(), currentUser.getPassword())) {
                 String value = String.valueOf(currentUser.getId());
                 sessionStorage.saveWithTtl(key, value, ttlMin);
+                log.info("Authenticate user with Id:{}", currentUser.getId());
                 return new ResponseUserDto(currentUser.getName());
             }
         }
@@ -62,7 +66,7 @@ public class AuthenticationService {
                 .orElseThrow(() -> new AuthenticationException("Ошибка аутентификации: не удалось найти актуальную сессию"));
         int id = Integer.parseInt(userId);
         User user = userRepository.findUserById(id)
-                .orElseThrow(() -> new IllegalStateException("Ошибка на стороне сервера: не удалось найти пользователя"));
+                .orElseThrow(() -> new IllegalStateException("Ошибка на стороне сервера: не удалось найти пользователя с Id " + id));
         return new ResponseUserDto(user.getName());
     }
 }

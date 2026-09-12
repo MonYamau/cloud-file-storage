@@ -2,6 +2,7 @@ package ru.monyamau.cloudfilestorage.service;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Service
 public class ResourceService {
     private final static String PERSONAL_DIRECTORY_NAME = "user-%s-files/";
@@ -66,7 +68,8 @@ public class ResourceService {
         checkNonexistenceOfResource(path.getFullPath());
         resourceStorage.createDirectory(path.getFullPath());
         ResourceItem item = resourceStorage.findResource(path.getFullPath())
-                .orElseThrow(() -> new IllegalStateException("Ошибка создания директории: не удалось найти ресурс"));
+                .orElseThrow(() -> new IllegalStateException("Ошибка создания директории: не удалось найти ресурс " + path.getFullPath()));
+        log.info("Create directory {} for user with Id:{}", path.getFullPath(), userContext.getUserId());
         return resourceItemMapper.toDto(item);
     }
 
@@ -101,6 +104,7 @@ public class ResourceService {
         }
         checkExistenceOfResource(path.getFullPath());
         resourceStorage.deleteResource(path.getFullPath());
+        log.info("Delete resource {} for user with Id:{}", path.getFullPath(), userContext.getUserId());
     }
 
     public List<ResponseResourceDto> uploadResource(RequestUploadDto uploadDto) {
@@ -112,6 +116,8 @@ public class ResourceService {
             checkNonexistenceOfResource(path.getFullPath() + filename);
         }
         List<ResourceItem> resourceItemList = uploadFiles(path.getFullPath(), uploadDto.object());
+        log.info("Upload {} resources into {} path for user with Id:{}",
+                resourceItemList.size(), path.getFullPath(), userContext.getUserId());
         return resourceItemList.stream().map(resourceItemMapper::toDto).toList();
     }
 
@@ -124,7 +130,9 @@ public class ResourceService {
         checkNonexistenceOfResource(newPath.getFullPath());
         resourceStorage.moveResource(oldPath.getFullPath(), newPath.getFullPath());
         ResourceItem resourceItem = resourceStorage.findResource(newPath.getFullPath()).orElseThrow(
-                () -> new IllegalStateException("Ошибка перемещения/переименования: не удалось найти ресурс"));
+                () -> new IllegalStateException("Ошибка перемещения/переименования: не удалось найти ресурс " + newPath.getFullPath()));
+        log.info("Move/rename resource from {} to {} for user with Id:{}",
+                oldPath.getFullPath(), newPath.getFullPath(), userContext.getUserId());
         return resourceItemMapper.toDto(resourceItem);
     }
 
@@ -137,12 +145,17 @@ public class ResourceService {
                 List<ResourceItem> resourceItemList = resourceStorage.findAllByPrefix(path.getFullPath());
                 ByteArrayOutputStream outputStream = ArchiveUtil
                         .archiveItemsToZip(resourceItemList, path.getFullPath(), resourceStorage::downloadResource);
+                log.info("Download archive from {} with size {} for user with Id:{}",
+                        path.getFullPath(), outputStream.size(), userContext.getUserId());
                 return new ResponseDownloadDto(resourceName + ARCHIVE_FORMAT, outputStream.toByteArray());
             }
             InputStream inputStream = resourceStorage.downloadResource(path.getFullPath());
-            return new ResponseDownloadDto(resourceName, inputStream.readAllBytes());
+            byte[] bytes = inputStream.readAllBytes();
+            log.info("Download file from {} with size {} for user with Id:{}",
+                    path.getFullPath(), bytes.length, userContext.getUserId());
+            return new ResponseDownloadDto(resourceName, bytes);
         } catch (IOException e) {
-            throw new IllegalStateException("Ошибка загрузки: не удалось скачать ресурс", e);
+            throw new IllegalStateException("Ошибка загрузки: не удалось скачать ресурс " + path.getFullPath(), e);
         }
     }
 
@@ -164,10 +177,10 @@ public class ResourceService {
 
     private void validateMovement(ResourcePath oldPath, ResourcePath newPath) {
         if (oldPath.path().equals(newPath.path())) {
-            throw new InvalidInputException("Ошибка перемещения/переименования: ресурс уже существует по пути назначения");
+            throw new InvalidInputException("Ошибка перемещения/переименования: ресурс " + newPath.path() + " уже существует по пути назначения");
         }
         if (newPath.path().startsWith(oldPath.path()) && oldPath.isDirectory()) {
-            throw new InvalidInputException("Ошибка перемещения/переименования: директорию нельзя перенести в свои поддиректории");
+            throw new InvalidInputException("Ошибка перемещения/переименования: директорию " + newPath.path() + " нельзя перенести в свои поддиректории");
         }
         String oldParentDirectory = oldPath.getParentDirectoryWithoutPersonalDirectory();
         String newParentDirectory = newPath.getParentDirectoryWithoutPersonalDirectory();
