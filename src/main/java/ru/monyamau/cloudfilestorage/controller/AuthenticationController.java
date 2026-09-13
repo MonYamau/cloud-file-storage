@@ -19,7 +19,7 @@ import java.util.UUID;
 
 @RestController
 public class AuthenticationController implements AuthenticationApi {
-    private final static int TTL_MINUTES = 30;
+    private final static int TTL_MINUTES = 60 * 4;
 
     private final AuthenticationService authService;
 
