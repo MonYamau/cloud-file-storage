@@ -49,6 +49,7 @@ dependencies {
     implementation "org.flywaydb:flyway-core:${flywayVersion}"
     implementation "org.flywaydb:flyway-mysql:${flywayVersion}"
     implementation "ch.qos.logback:logback-classic:1.6.3"
+    implementation "com.zaxxer:HikariCP:7.1.0"
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"

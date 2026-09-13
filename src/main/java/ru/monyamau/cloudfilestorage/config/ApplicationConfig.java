@@ -1,5 +1,7 @@
 package ru.monyamau.cloudfilestorage.config;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
@@ -19,7 +21,6 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
@@ -53,12 +54,14 @@ public class ApplicationConfig {
 
     @Bean
     public DataSource dataSource() {
-        DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName(env.getRequiredProperty("mysql.driver_class"));
-        dataSource.setUrl(env.getRequiredProperty("mysql.url"));
-        dataSource.setUsername(env.getRequiredProperty("mysql.username"));
-        dataSource.setPassword(env.getRequiredProperty("mysql.password"));
-        return dataSource;
+        HikariConfig config = new HikariConfig();
+        config.setDriverClassName(env.getRequiredProperty("mysql.driver_class"));
+        config.setJdbcUrl(env.getRequiredProperty("mysql.url"));
+        config.setUsername(env.getRequiredProperty("mysql.username"));
+        config.setPassword(env.getRequiredProperty("mysql.password"));
+        config.setMaximumPoolSize(7);
+        config.setConnectionTimeout(20000);
+        return new HikariDataSource(config);
     }
 
     @Bean
