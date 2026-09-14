@@ -7,8 +7,8 @@ import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatche
 
 public class DispatcherServletInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
     private static final long UNIT_MB = 1024 * 1024;
-    private static final long MAX_FILE_SIZE = UNIT_MB * 12;
-    private static final long MAX_REQUEST_SIZE = (MAX_FILE_SIZE + 2) * 3;
+    private static final long MAX_FILE_SIZE = -1L;
+    private static final long MAX_REQUEST_SIZE = -1L;
     private static final long FILE_SIZE_THRESHOLD = UNIT_MB * 2;
 
     @Override
