@@ -127,7 +127,7 @@ public class ApplicationConfig {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
             }
         } catch (MinioException e) {
-            throw new IllegalStateException("Не удалось создать бакет minIO");
+            throw new IllegalStateException("Не удалось создать бакет minIO", e);
         }
         return minioClient;
     }
