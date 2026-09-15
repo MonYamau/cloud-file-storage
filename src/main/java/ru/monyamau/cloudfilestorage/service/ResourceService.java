@@ -4,6 +4,8 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.monyamau.cloudfilestorage.domain.ResourceItem;
@@ -148,19 +150,9 @@ public class ResourceService {
         checkExistenceOfResource(path.getFullPath());
         String resourceName = path.isPersonalDirectory() ? "download" : path.getResourceName();
         try {
-            if (path.isDirectory()) {
-                List<ResourceItem> resourceItemList = resourceStorage.findAllByPrefix(path.getFullPath());
-                ByteArrayOutputStream outputStream = ArchiveUtil
-                        .archiveItemsToZip(resourceItemList, path.getFullPath(), resourceStorage::downloadResource);
-                log.info("Download archive from {} with size {} for user with Id:{}",
-                        path.getFullPath(), outputStream.size(), userContext.getUserId());
-                return new ResponseDownloadDto(resourceName + ARCHIVE_FORMAT, outputStream.toByteArray());
-            }
-            InputStream inputStream = resourceStorage.downloadResource(path.getFullPath());
-            byte[] bytes = inputStream.readAllBytes();
-            log.info("Download file from {} with size {} for user with Id:{}",
-                    path.getFullPath(), bytes.length, userContext.getUserId());
-            return new ResponseDownloadDto(resourceName, bytes);
+            return path.isDirectory() ?
+                    downloadDirectory(path.getFullPath(), resourceName)
+                    : downloadFile(path.getFullPath(), resourceName);
         } catch (IOException e) {
             throw new IllegalStateException("Ошибка загрузки: не удалось скачать ресурс " + path.getFullPath(), e);
         }
@@ -180,6 +172,25 @@ public class ResourceService {
         } catch (IOException e) {
             throw new IllegalStateException("Ошибка загрузки: не удалось сохранить ресурс", e);
         }
+    }
+
+    private ResponseDownloadDto downloadFile(String fullPath, String filename) throws IOException {
+        InputStream inputStream = resourceStorage.downloadResource(fullPath);
+        String fileContentType = MediaTypeFactory.getMediaType(filename)
+                .map(MediaType::toString)
+                .orElse("application/octet-stream");
+        byte[] bytes = inputStream.readAllBytes();
+        log.info("Download file from {} with size {} for user with Id:{}", fullPath, bytes.length, userContext.getUserId());
+        return new ResponseDownloadDto(filename, fileContentType, bytes);
+    }
+
+    private ResponseDownloadDto downloadDirectory(String fullPath, String directoryName) throws IOException {
+        List<ResourceItem> resourceItemList = resourceStorage.findAllByPrefix(fullPath);
+        ByteArrayOutputStream outputStream = ArchiveUtil
+                .archiveItemsToZip(resourceItemList, fullPath, resourceStorage::downloadResource);
+        log.info("Download archive from {} with size {} for user with Id:{}",
+                fullPath, outputStream.size(), userContext.getUserId());
+        return new ResponseDownloadDto(directoryName + ARCHIVE_FORMAT, "application/zip", outputStream.toByteArray());
     }
 
     private void validateMovement(ResourcePath oldPath, ResourcePath newPath) {

@@ -39,7 +39,9 @@ public class ResourceController implements ResourceApi {
     @Override
     public ResponseEntity<byte[]> download(RequestResourceDto requestDto) {
         ResponseDownloadDto responseDto = resourceService.downloadResource(requestDto);
-        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.APPLICATION_OCTET_STREAM)
+        MediaType mediaType = MediaType.valueOf(responseDto.contentType());
+        return ResponseEntity.status(HttpStatus.OK)
+                .contentType(mediaType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=%s".formatted(responseDto.filename()))
                 .body(responseDto.bytes());
     }
