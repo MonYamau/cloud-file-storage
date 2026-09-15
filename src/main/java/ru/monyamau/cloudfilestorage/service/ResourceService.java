@@ -36,6 +36,9 @@ public class ResourceService {
     private final static String PERSONAL_DIRECTORY_NAME = "user-%s-files/";
     private final static String ARCHIVE_FORMAT = ".zip";
     private final static String SEPARATOR_SIGN = "/";
+    private final static String ZIP_CONTENT_TYPE = "application/zip";
+    private final static String OCTET_STREAM_CONTENT_TYPE = "application/octet-stream";
+    private final static String DEFAULT_RESOURCE_NAME = "download";
 
     private final ResourceStorage resourceStorage;
     private final UserContext userContext;
@@ -148,7 +151,7 @@ public class ResourceService {
     public ResponseDownloadDto downloadResource(RequestResourceDto resourceDto) {
         ResourcePath path = new ResourcePath(formatPersonalDirectory(), resourceDto.path());
         checkExistenceOfResource(path.getFullPath());
-        String resourceName = path.isPersonalDirectory() ? "download" : path.getResourceName();
+        String resourceName = path.isPersonalDirectory() ? DEFAULT_RESOURCE_NAME : path.getResourceName();
         try {
             return path.isDirectory() ?
                     downloadDirectory(path.getFullPath(), resourceName)
@@ -178,7 +181,7 @@ public class ResourceService {
         InputStream inputStream = resourceStorage.downloadResource(fullPath);
         String fileContentType = MediaTypeFactory.getMediaType(filename)
                 .map(MediaType::toString)
-                .orElse("application/octet-stream");
+                .orElse(OCTET_STREAM_CONTENT_TYPE);
         byte[] bytes = inputStream.readAllBytes();
         log.info("Download file from {} with size {} for user with Id:{}", fullPath, bytes.length, userContext.getUserId());
         return new ResponseDownloadDto(filename, fileContentType, bytes);
@@ -190,7 +193,7 @@ public class ResourceService {
                 .archiveItemsToZip(resourceItemList, fullPath, resourceStorage::downloadResource);
         log.info("Download archive from {} with size {} for user with Id:{}",
                 fullPath, outputStream.size(), userContext.getUserId());
-        return new ResponseDownloadDto(directoryName + ARCHIVE_FORMAT, "application/zip", outputStream.toByteArray());
+        return new ResponseDownloadDto(directoryName + ARCHIVE_FORMAT, ZIP_CONTENT_TYPE, outputStream.toByteArray());
     }
 
     private void validateMovement(ResourcePath oldPath, ResourcePath newPath) {
