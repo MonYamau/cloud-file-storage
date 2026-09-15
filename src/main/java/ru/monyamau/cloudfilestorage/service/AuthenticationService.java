@@ -2,6 +2,7 @@ package ru.monyamau.cloudfilestorage.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import ru.monyamau.cloudfilestorage.dto.request.RequestUserDto;
@@ -32,10 +33,16 @@ public class AuthenticationService {
     public ResponseUserDto registerUser(String key, RequestUserDto userDto, int ttlMin) {
         User savedUser = transactionTemplate.execute(status -> {
             if (userRepository.existsUserByName(userDto.username())) {
-                throw new UserAlreadyExistsException("Ошибка уникальности: пользователь с именем " + userDto.username() + " уже существует");
+                throw new UserAlreadyExistsException("Ошибка уникальности: пользователь с именем "
+                        + userDto.username() + " уже существует");
             }
             String hash = PassHashUtil.hash(userDto.password());
-            return userRepository.save(new User(userDto.username(), hash));
+            try {
+                return userRepository.save(new User(userDto.username(), hash));
+            } catch (DataIntegrityViolationException e) {
+                throw new UserAlreadyExistsException(("Ошибка уникальности: пользователь с именем "
+                        + userDto.username() + " уже существует"));
+            }
         });
         String value = String.valueOf(savedUser.getId());
         sessionStorage.saveWithTtl(key, value, ttlMin);
