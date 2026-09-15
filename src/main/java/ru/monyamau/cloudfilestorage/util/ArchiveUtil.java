@@ -15,7 +15,7 @@ import java.util.zip.ZipOutputStream;
 public final class ArchiveUtil {
     public ByteArrayOutputStream archiveItemsToZip(List<ResourceItem> resourceItemList, String path, Function<String, InputStream> downloader) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)){
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
             for (ResourceItem resourceItem : resourceItemList) {
                 String fullObjectName = resourceItem.objectName();
                 if (resourceItem.isDir()) continue;

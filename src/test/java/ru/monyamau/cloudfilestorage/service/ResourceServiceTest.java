@@ -226,7 +226,7 @@ public class ResourceServiceTest extends BaseContextTest {
 
 
     @Test
-    @DisplayName("Выброс InvalidInputException при попытке сохранить файлы с дублирующемся именем")
+    @DisplayName("Выброс InvalidInputException при попытке сохранить файлы с дублирующимся именем")
     void shouldNotUploadResourcesWithDuplicateName() {
         userContext.setUserId(17);
         MockMultipartFile multipartFile = new MockMultipartFile("object", "file.txt", "text/plain", "".getBytes());
