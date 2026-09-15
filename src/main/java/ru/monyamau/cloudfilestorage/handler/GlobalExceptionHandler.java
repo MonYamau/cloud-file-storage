@@ -51,6 +51,14 @@ public class GlobalExceptionHandler {
                 .body(new ErrorDto(e.getMessage()));
     }
 
+    @ExceptionHandler({ResourceStorageException.class, SessionStorageException.class})
+    public ResponseEntity<ErrorDto> handleStorageException(Exception e) {
+        String message = "Непредвиденная ошибка на стороне сервера";
+        log.error("Storage error: ", e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorDto(message));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDto> handleAnyException(Exception e) {
         String message = "Непредвиденная ошибка на стороне сервера";
