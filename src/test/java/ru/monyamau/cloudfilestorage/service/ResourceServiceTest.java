@@ -223,4 +223,15 @@ public class ResourceServiceTest extends BaseContextTest {
         List<ResponseResourceDto> resourceDtoList1 = resourceService.searchResource(new RequestQueryDto("папка"));
         assert resourceDtoList1.contains(new ResponseResourceDto("", "папка", null, ResourceType.DIRECTORY));
     }
+
+
+    @Test
+    @DisplayName("Выброс InvalidInputException при попытке сохранить файлы с дублирующемся именем")
+    void shouldNotUploadResourcesWithDuplicateName() {
+        userContext.setUserId(17);
+        MockMultipartFile multipartFile = new MockMultipartFile("object", "file.txt", "text/plain", "".getBytes());
+        MockMultipartFile duplicatedMultipartFile = new MockMultipartFile("object", "file.txt", "text/plain", "".getBytes());
+        Assertions.assertThrows(InvalidInputException.class, () -> resourceService.uploadResource(
+                new RequestUploadDto("", List.of(multipartFile, duplicatedMultipartFile))));
+    }
 }

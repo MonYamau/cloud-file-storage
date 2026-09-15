@@ -24,6 +24,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -110,9 +111,15 @@ public class ResourceService {
     public List<ResponseResourceDto> uploadResource(RequestUploadDto uploadDto) {
         ResourcePath path = new ResourcePath(formatPersonalDirectory(), uploadDto.path());
         checkExistenceOfResource(path.getFullPath());
+        HashSet<Object> uniqueNames = new HashSet<>();
         for (MultipartFile multipartFile : uploadDto.object()) {
             String filename = multipartFile.getOriginalFilename();
+            if (!uniqueNames.add(filename)) {
+                throw new InvalidInputException("Ошибка загрузки: нельзя загрузить более одного файла с данным именем "
+                        + filename);
+            }
             validateUploadedFilename(filename);
+
             checkNonexistenceOfResource(path.getFullPath() + filename);
         }
         List<ResourceItem> resourceItemList = uploadFiles(path.getFullPath(), uploadDto.object());
