@@ -3,7 +3,6 @@ package ru.monyamau.cloudfilestorage.controller;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import ru.monyamau.cloudfilestorage.api.UserApi;
@@ -27,6 +26,6 @@ public class UserController implements UserApi {
         Cookie cookie = CookieUtil.findSessionId(cookies)
                 .orElseThrow(() -> new AuthenticationException("Ошибка аутентификации: не выполнен вход пользователем"));
         ResponseUserDto responseDto = authenticationService.findUser(cookie.getValue());
-        return new ResponseEntity<>(responseDto, HttpStatus.OK);
+        return ResponseEntity.ok(responseDto);
     }
 }

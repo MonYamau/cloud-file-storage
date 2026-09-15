@@ -21,12 +21,12 @@ public class DirectoryController implements DirectoryApi {
     @Override
     public ResponseEntity<List<ResponseResourceDto>> showAbout(RequestDirectoryDto requestDto) {
         List<ResponseResourceDto> responseDtoList = resourceService.findAllFromDirectory(requestDto);
-        return new ResponseEntity<>(responseDtoList, HttpStatus.OK);
+        return ResponseEntity.ok(responseDtoList);
     }
 
     @Override
     public ResponseEntity<ResponseResourceDto> create(RequestDirectoryDto requestDto) {
         ResponseResourceDto responseDto = resourceService.createDirectory(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 }

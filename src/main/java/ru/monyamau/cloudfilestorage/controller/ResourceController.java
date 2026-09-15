@@ -27,20 +27,20 @@ public class ResourceController implements ResourceApi {
     @Override
     public ResponseEntity<ResponseResourceDto> showAbout(RequestResourceDto requestDto) {
         ResponseResourceDto responseDto = resourceService.findResource(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.OK);
+        return ResponseEntity.ok(responseDto);
     }
 
     @Override
     public ResponseEntity<Void> delete(RequestResourceDto requestDto) {
         resourceService.deleteResource(requestDto);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @Override
     public ResponseEntity<byte[]> download(RequestResourceDto requestDto) {
         ResponseDownloadDto responseDto = resourceService.downloadResource(requestDto);
         MediaType mediaType = MediaType.valueOf(responseDto.contentType());
-        return ResponseEntity.status(HttpStatus.OK)
+        return ResponseEntity.ok()
                 .contentType(mediaType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=%s".formatted(responseDto.filename()))
                 .body(responseDto.bytes());
@@ -49,18 +49,18 @@ public class ResourceController implements ResourceApi {
     @Override
     public ResponseEntity<ResponseResourceDto> change(RequestMovementDto requestDto) {
         ResponseResourceDto responseDto = resourceService.changeResource(requestDto);
-        return new ResponseEntity<>(responseDto, HttpStatus.OK);
+        return ResponseEntity.ok(responseDto);
     }
 
     @Override
     public ResponseEntity<List<ResponseResourceDto>> search(RequestQueryDto requestDto) {
         List<ResponseResourceDto> responseDtoList = resourceService.searchResource(requestDto);
-        return new ResponseEntity<>(responseDtoList, HttpStatus.OK);
+        return ResponseEntity.ok(responseDtoList);
     }
 
     @Override
     public ResponseEntity<List<ResponseResourceDto>> upload(RequestUploadDto requestDto) {
         List<ResponseResourceDto> responseDtoList = resourceService.uploadResource(requestDto);
-        return new ResponseEntity<>(responseDtoList, HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDtoList);
     }
 }

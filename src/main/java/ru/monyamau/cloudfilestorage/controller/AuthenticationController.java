@@ -44,8 +44,7 @@ public class AuthenticationController implements AuthenticationApi {
         String sessionId = String.valueOf(UUID.randomUUID());
         ResponseUserDto userDto = authService.authenticateUser(sessionId, requestDto, TTL_MINUTES);
         ResponseCookie cookie = CookieUtil.create(sessionId, TTL_MINUTES);
-        return ResponseEntity
-                .status(HttpStatus.OK)
+        return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(userDto);
     }
