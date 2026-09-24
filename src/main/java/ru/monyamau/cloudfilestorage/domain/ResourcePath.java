@@ -3,6 +3,11 @@ package ru.monyamau.cloudfilestorage.domain;
 public record ResourcePath(String personalDirectory, String path) {
     private final static String SEPARATOR_SIGN = "/";
 
+    public ResourcePath {
+        if (path.isBlank()) {
+            path = "";
+        }
+    }
     public boolean isDirectory() {
         return path.endsWith(SEPARATOR_SIGN);
     }

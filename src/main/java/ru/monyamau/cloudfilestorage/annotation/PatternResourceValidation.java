@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.RECORD_COMPONENT, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = {})
-@Pattern(regexp = "^(?!.*\\.\\.)(?:/|(?:[a-zA-Zа-яА-ЯёЁ0-9_ ()\\[\\]{}.,+=\\\\—~!@#$%^&;'-]+/)*[a-zA-Zа-яА-ЯёЁ0-9_ ()\\[\\]{}.,+=\\\\—~!@#$%^&;'-]*)$")
+@Pattern(regexp = "^(?:\\s*|(?!.*\\.\\.)(?:/|(?:[a-zA-Zа-яА-ЯёЁ0-9_ ()\\[\\]{}.,+=\\\\—~!@#$%^&;'-]+/)*[a-zA-Zа-яА-ЯёЁ0-9_ ()\\[\\]{}.,+=\\\\—~!@#$%^&;'-]*))$")
 public @interface PatternResourceValidation {
     String message() default "Путь к ресурсу может содержать только латинские и кириллические буквы, пробел, " +
             "цифры и некоторые спецсимволы";
