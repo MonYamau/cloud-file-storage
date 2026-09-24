@@ -21,7 +21,10 @@ import ru.monyamau.cloudfilestorage.handler.SessionInterceptor;
 
 @Configuration
 @EnableWebMvc
-@ComponentScan(basePackages = "ru.monyamau.cloudfilestorage")
+@ComponentScan(basePackages = {
+        "ru.monyamau.cloudfilestorage.controller",
+        "ru.monyamau.cloudfilestorage.handler"
+})
 @Import({
         SpringDocConfiguration.class,
         SpringDocWebMvcConfiguration.class,

@@ -33,11 +33,7 @@ import javax.sql.DataSource;
 
 @Configuration
 @ComponentScan(
-        basePackages = "ru.monyamau.cloudfilestorage",
-        excludeFilters = @ComponentScan.Filter(
-                type = FilterType.ASSIGNABLE_TYPE,
-                classes = WebConfig.class
-        )
+        basePackages = "ru.monyamau.cloudfilestorage"
 )
 @PropertySource({"classpath:config/application.properties"})
 @PropertySource({"classpath:config/application-${spring.profiles.active:dev}.properties"})
