@@ -1,22 +1,27 @@
 package ru.monyamau.cloudfilestorage.handler;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import ru.monyamau.cloudfilestorage.dto.response.ErrorDto;
 import ru.monyamau.cloudfilestorage.exception.*;
 
 @Slf4j
 @RestControllerAdvice
-public class GlobalExceptionHandler {
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorDto> handleValidException(MethodArgumentNotValidException e) {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+    @Override
+    protected @Nullable ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
         ErrorDto errorDto = new ErrorDto("Validation error");
-        if (e.getBindingResult().getFieldError() != null) {
-            errorDto = new ErrorDto(e.getBindingResult().getFieldError().getDefaultMessage());
+        if (ex.getBindingResult().getFieldError() != null) {
+            errorDto = new ErrorDto(ex.getBindingResult().getFieldError().getDefaultMessage());
         }
         log.warn("Validation error: {}", errorDto.message());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
