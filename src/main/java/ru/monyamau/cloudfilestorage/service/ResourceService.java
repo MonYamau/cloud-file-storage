@@ -54,15 +54,13 @@ public class ResourceService {
 
     public List<ResponseResourceDto> findAllFromDirectory(RequestDirectoryDto directoryDto) {
         ResourcePath path = new ResourcePath(formatPersonalDirectory(), directoryDto.path());
-        String personalDirectoryName = formatPersonalDirectoryName();
-        checkExistenceOfResource(path.getFullPath());
+        String fullPath = path.getFullPath();
+        checkExistenceOfResource(fullPath);
         List<ResponseResourceDto> result = new ArrayList<>();
-        List<ResourceItem> resources = resourceStorage.findAllFromDirectory(path.getFullPath());
+        List<ResourceItem> resources = resourceStorage.findAllFromDirectory(fullPath);
         for (ResourceItem resource : resources) {
-            ResponseResourceDto converted = resourceItemMapper.toDto(resource);
-            if (personalDirectoryName.equals(converted.name())) continue;
-            if (path.getResourceName().equals(converted.name())) continue;
-            result.add(converted);
+            if (resource.objectName().equals(fullPath)) continue;
+            result.add(resourceItemMapper.toDto(resource));
         }
         return result;
     }
