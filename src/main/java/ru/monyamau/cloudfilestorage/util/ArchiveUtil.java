@@ -18,7 +18,12 @@ public final class ArchiveUtil {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
             for (ResourceItem resourceItem : resourceItemList) {
                 String fullObjectName = resourceItem.objectName();
-                if (resourceItem.isDir()) continue;
+                if (fullObjectName.equals(path)) continue;
+                if (resourceItem.isDir()) {
+                    zipOutputStream.putNextEntry(new ZipEntry(fullObjectName.substring(path.length())));
+                    zipOutputStream.closeEntry();
+                    continue;
+                }
                 zipOutputStream.putNextEntry(new ZipEntry(fullObjectName.substring(path.length())));
                 try (InputStream inputStream = downloader.apply(resourceItem.objectName())) {
                     inputStream.transferTo(zipOutputStream);
