@@ -28,6 +28,7 @@ public class DispatcherServletInitializer extends AbstractAnnotationConfigDispat
 
     @Override
     protected void customizeRegistration(ServletRegistration.Dynamic registration) {
+        registration.setAsyncSupported(true);
         MultipartConfigElement configElement = new MultipartConfigElement(
                 System.getProperty("java.io.tmpdir"), MAX_FILE_SIZE, MAX_REQUEST_SIZE, (int) FILE_SIZE_THRESHOLD);
         registration.setMultipartConfig(configElement);

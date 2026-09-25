@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import ru.monyamau.cloudfilestorage.domain.ResourceItem;
 import ru.monyamau.cloudfilestorage.domain.ResourcePath;
 import ru.monyamau.cloudfilestorage.domain.ResourceType;
@@ -22,9 +23,7 @@ import ru.monyamau.cloudfilestorage.infrastructure.ResourceStorage;
 import ru.monyamau.cloudfilestorage.mapper.ResourceItemMapper;
 import ru.monyamau.cloudfilestorage.util.ArchiveUtil;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -124,7 +123,6 @@ public class ResourceService {
                         + filename);
             }
             validateUploadedFilename(filename);
-
             checkNonexistenceOfResource(path.getFullPath() + filename);
         }
         List<ResourceItem> resourceItemList = uploadFiles(path.getFullPath(), uploadDto.object());
@@ -178,22 +176,24 @@ public class ResourceService {
     }
 
     private ResponseDownloadDto downloadFile(String fullPath, String filename) throws IOException {
-        InputStream inputStream = resourceStorage.downloadResource(fullPath);
+        StreamingResponseBody body = outputStream -> {
+            try (InputStream inputStream = resourceStorage.downloadResource(fullPath)) {
+                inputStream.transferTo(outputStream);
+            }
+        };
         String fileContentType = MediaTypeFactory.getMediaType(filename)
                 .map(MediaType::toString)
                 .orElse(OCTET_STREAM_CONTENT_TYPE);
-        byte[] bytes = inputStream.readAllBytes();
-        log.info("Download file from {} with size {} for user with Id:{}", fullPath, bytes.length, userContext.getUserId());
-        return new ResponseDownloadDto(filename, fileContentType, bytes);
+        log.info("Download file from {} for user with Id:{}", fullPath, userContext.getUserId());
+        return new ResponseDownloadDto(filename, fileContentType, body);
     }
 
     private ResponseDownloadDto downloadDirectory(String fullPath, String directoryName) throws IOException {
         List<ResourceItem> resourceItemList = resourceStorage.findAllByPrefix(fullPath);
-        ByteArrayOutputStream outputStream = ArchiveUtil
-                .archiveItemsToZip(resourceItemList, fullPath, resourceStorage::downloadResource);
-        log.info("Download archive from {} with size {} for user with Id:{}",
-                fullPath, outputStream.size(), userContext.getUserId());
-        return new ResponseDownloadDto(directoryName + ARCHIVE_FORMAT, ZIP_CONTENT_TYPE, outputStream.toByteArray());
+        StreamingResponseBody body = outputStream -> ArchiveUtil
+                .archiveItemsToZip(resourceItemList, outputStream, fullPath, resourceStorage::downloadResource);
+        log.info("Download archive from {} for user with Id:{}", fullPath,  userContext.getUserId());
+        return new ResponseDownloadDto(directoryName + ARCHIVE_FORMAT, ZIP_CONTENT_TYPE, body);
     }
 
     private void validateMovement(ResourcePath oldPath, ResourcePath newPath) {

@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import ru.monyamau.cloudfilestorage.annotation.AuthenticationErrorApiResponse;
 import ru.monyamau.cloudfilestorage.annotation.NotFoundErrorApiResponse;
 import ru.monyamau.cloudfilestorage.annotation.ServerErrorApiResponse;
@@ -52,7 +53,7 @@ public interface ResourceApi {
     @AuthenticationErrorApiResponse
     @NotFoundErrorApiResponse
     @ServerErrorApiResponse
-    ResponseEntity<byte[]> download(@Valid @ModelAttribute(name = "path") RequestResourceDto requestDto);
+    ResponseEntity<StreamingResponseBody> download(@Valid @ModelAttribute(name = "path") RequestResourceDto requestDto);
 
     @PostMapping("/move")
     @Operation(summary = "Переместить/переименовать ресурс")

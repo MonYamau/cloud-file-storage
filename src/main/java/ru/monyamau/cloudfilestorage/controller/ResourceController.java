@@ -1,10 +1,8 @@
 package ru.monyamau.cloudfilestorage.controller;
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import ru.monyamau.cloudfilestorage.api.ResourceApi;
 import ru.monyamau.cloudfilestorage.dto.request.RequestMovementDto;
 import ru.monyamau.cloudfilestorage.dto.request.RequestQueryDto;
@@ -14,6 +12,7 @@ import ru.monyamau.cloudfilestorage.dto.response.ResponseDownloadDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
 import ru.monyamau.cloudfilestorage.service.ResourceService;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -37,13 +36,16 @@ public class ResourceController implements ResourceApi {
     }
 
     @Override
-    public ResponseEntity<byte[]> download(RequestResourceDto requestDto) {
+    public ResponseEntity<StreamingResponseBody> download(RequestResourceDto requestDto) {
         ResponseDownloadDto responseDto = resourceService.downloadResource(requestDto);
         MediaType mediaType = MediaType.valueOf(responseDto.contentType());
+        ContentDisposition contentDisposition = ContentDisposition.attachment()
+                .filename(responseDto.filename(), StandardCharsets.UTF_8)
+                .build();
         return ResponseEntity.ok()
                 .contentType(mediaType)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=%s".formatted(responseDto.filename()))
-                .body(responseDto.bytes());
+                .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
+                .body(responseDto.body());
     }
 
     @Override
