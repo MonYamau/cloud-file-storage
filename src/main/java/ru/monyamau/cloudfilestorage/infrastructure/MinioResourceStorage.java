@@ -225,7 +225,7 @@ public class MinioResourceStorage implements ResourceStorage {
         createDirectory(newPath);
         for (ResourceItem resourceItem : resourceItemList) {
             String oldObjectPath = resourceItem.objectName();
-            String newObjectPath = oldObjectPath.replace(oldPath, newPath);
+            String newObjectPath = newPath + oldObjectPath.substring(oldPath.length());
             copy(oldObjectPath, newObjectPath);
         }
         deleteDirectory(oldPath);
