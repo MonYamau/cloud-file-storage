@@ -33,7 +33,10 @@ import javax.sql.DataSource;
 
 @Configuration
 @ComponentScan(
-        basePackages = "ru.monyamau.cloudfilestorage"
+        basePackages = {"ru.monyamau.cloudfilestorage.service",
+                "ru.monyamau.cloudfilestorage.infrastructure",
+                "ru.monyamau.cloudfilestorage.mapper",
+                "ru.monyamau.cloudfilestorage.repository"}
 )
 @PropertySource({"classpath:config/application.properties"})
 @PropertySource({"classpath:config/application-${spring.profiles.active:dev}.properties"})
