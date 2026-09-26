@@ -22,7 +22,6 @@
 ![Gradle 8.8](https://img.shields.io/badge/Gradle_8.8-02303A?style=flat-square&logo=gradle&logoColor=white)
 ![Springdoc OpenAPI 3.1](https://img.shields.io/badge/Springdoc_OpenAPI_3.1-6BA539?style=flat-square&logo=openapiinitiative&logoColor=white)
 ![Lombok 1.18](https://img.shields.io/badge/Lombok_1.18-9E1111?style=flat-square&logo=lombok&logoColor=white)
-![MapStruct 1.6](https://img.shields.io/badge/MapStruct_1.6-F8981D?style=flat-square&logo=java&logoColor=white)
 ![JUnit 6.1](https://img.shields.io/badge/JUnit_6.1-25A162?style=flat-square&logo=junit5&logoColor=white)
 ![Testcontainers 2.0](https://img.shields.io/badge/Testcontainers_2.0-0081CB?style=flat-square&logo=testcontainers&logoColor=white)
 
@@ -39,7 +38,7 @@
 
 Перед запуском убедитесь, что у вас установлены:
 
-* **Java 21** (или выше)
+* **Java 21**
 * **Tomcat 11** (сервер приложений)
 * **Docker**
 
@@ -49,10 +48,9 @@
 
 1. Склонируйте текущий репозиторий
 
-
-2. По умолчанию конфигурация приложения ожидает в папке src/main/resources/ файл с названием`application-dev.properties`
-для локального запуска, но также доступна настройка переменных окружения по примеру `.env.example` для prod-профиля
-
+2. По умолчанию конфигурация приложения расположена в папке src/main/resources/config/ с названием 
+`application-dev.properties` для локального запуска, но также доступна настройка переменных окружения по примеру
+`.env.example` для prod-профиля
 
 3. Запустите через **docker** базу данных и хранилища
 
@@ -67,10 +65,16 @@ docker compose up -d
 ```
 
 5. Скопируйте полученный файл `cloudfilestorage-1.0.war` в папку `webapps/` вашего установленного Tomcat 11. Запустите
-   Tomcat из его директории
+   Tomcat из его директории с помощью команды:
 
 ```Bash
    ./startup.bat
+```
+
+ или для Linux-систем
+
+```Bash
+    ./startup.sh
 ```
 
 После того как веб-контейнер распакует архив, приложение будет доступно в браузере по адресу:
@@ -120,7 +124,7 @@ docker compose up -d
 * **Backend:** Java 21, Spring Framework 7.0, Jakarta Servlet API 6.1, Apache Tomcat 11
 * **Data & Persistence:** Spring Data JPA 4.1, MySQL 9.7, Hibernate 7.4, HikariCP 7.1, Redis 8.8, MinIO 9.0,
 Flyway 13.5
-* **Утилиты:** Springdoc OpenAPI, Lombok, MapStruct, Jackson Databind, Logback + SLF4J, JBCrypt
+* **Утилиты:** Springdoc OpenAPI, Lombok, Jackson Databind, Logback + SLF4J, JBCrypt
 * **Tests**: JUnit5 + TestContainers
 * **Frontend:** В проект интегрирован базовый веб-интерфейс для взаимодействия с REST API
 [[ссылка на первоисточник](https://github.com/zhukovsd/cloud-storage-frontend/)]
@@ -157,7 +161,6 @@ Flyway 13.5
 - Исключение UserAlreadyExistsException при попытке зарегистрировать существующего пользователя
 - Успешный выход из сессии и повторная авторизация с созданием новой актуальной сессии
 - Выброс AuthenticationException при вводе некорректного пароля
-- Успешный поиск и получение профиля авторизованного пользователя по ключу сессии
 
 ### Тесты для сервиса файлов и директорий (ResourceService)
 
@@ -170,7 +173,6 @@ Flyway 13.5
 - Успешное удаление файла/директории из хранилища
 - Исключение ResourceNotFoundException при попытке создания ресурса в несуществующем пути
 - Выброс ResourceAlreadyExistsException при повторном создании уже существующего ресурса
-- Скачивание файлов: получение массива байтов и оригинального имени файла
 - Глобальный поиск ресурсов (файлов и папок) по подстроке во всех директориях пользователя
 - Выброс InvalidInputException при попытке сохранить файлы с дублирующимся именем
 
