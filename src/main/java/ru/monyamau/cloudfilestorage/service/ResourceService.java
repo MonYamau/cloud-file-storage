@@ -59,7 +59,7 @@ public class ResourceService {
         List<ResourceItem> resources = resourceStorage.findAllFromDirectory(fullPath);
         for (ResourceItem resource : resources) {
             if (resource.objectName().equals(fullPath)) continue;
-            result.add(resourceItemMapper.toDto(resource));
+            result.add(resourceItemMapper.toDto(resource, path.personalDirectory()));
         }
         return result;
     }
@@ -72,7 +72,7 @@ public class ResourceService {
         ResourceItem item = resourceStorage.findResource(path.getFullPath())
                 .orElseThrow(() -> new IllegalStateException("Ошибка создания директории: не удалось найти ресурс " + path.getFullPath()));
         log.info("Create directory {} for user with Id:{}", path.getFullPath(), userId);
-        return resourceItemMapper.toDto(item);
+        return resourceItemMapper.toDto(item, path.personalDirectory());
     }
 
     public ResponseResourceDto findResource(RequestResourceDto resourceDto, Integer userId) {
@@ -82,15 +82,16 @@ public class ResourceService {
         }
         ResourceItem resource = resourceStorage.findResource(path.getFullPath())
                 .orElseThrow(() -> new ResourceNotFoundException("Ресурс с текущим именем не найден: " + path.path()));
-        return resourceItemMapper.toDto(resource);
+        return resourceItemMapper.toDto(resource, path.personalDirectory());
     }
 
     public List<ResponseResourceDto> searchResource(RequestQueryDto queryDto, Integer userId) {
         String personalDirectoryName = formatPersonalDirectoryName(userId);
+        String personalDirectory = formatPersonalDirectory(userId);
         List<ResponseResourceDto> result = new ArrayList<>();
-        List<ResourceItem> resources = resourceStorage.findAllByPrefix(formatPersonalDirectory(userId));
+        List<ResourceItem> resources = resourceStorage.findAllByPrefix(personalDirectory);
         for (ResourceItem resource : resources) {
-            ResponseResourceDto converted = resourceItemMapper.toDto(resource);
+            ResponseResourceDto converted = resourceItemMapper.toDto(resource, personalDirectory);
             if (personalDirectoryName.equals(converted.name())) continue;
             if (matchQueryWithLowerCase(converted.name(), queryDto.query())) {
                 result.add(converted);
@@ -125,7 +126,9 @@ public class ResourceService {
         List<ResourceItem> resourceItemList = uploadFiles(path.getFullPath(), uploadCommand.files());
         log.info("Upload {} resources into {} path for user with Id:{}",
                 resourceItemList.size(), path.getFullPath(), userId);
-        return resourceItemList.stream().map(resourceItemMapper::toDto).toList();
+        return resourceItemList.stream()
+                .map(resource -> resourceItemMapper.toDto(resource, path.personalDirectory()))
+                .toList();
     }
 
     public ResponseResourceDto changeResource(RequestMovementDto movementDto, Integer userId) {
@@ -140,7 +143,7 @@ public class ResourceService {
                 () -> new IllegalStateException("Ошибка перемещения/переименования: не удалось найти ресурс " + newPath.getFullPath()));
         log.info("Move/rename resource from {} to {} for user with Id:{}",
                 oldPath.getFullPath(), newPath.getFullPath(), userId);
-        return resourceItemMapper.toDto(resourceItem);
+        return resourceItemMapper.toDto(resourceItem, newPath.personalDirectory());
     }
 
     public ResponseDownloadDto downloadResource(RequestResourceDto resourceDto, Integer userId) {

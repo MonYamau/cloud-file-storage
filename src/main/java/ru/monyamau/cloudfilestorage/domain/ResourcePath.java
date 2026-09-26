@@ -9,6 +9,10 @@ public record ResourcePath(String personalDirectory, String path) {
         }
     }
 
+    public static ResourcePath ofObjectKey(String personalDirectory, String objectKey) {
+        return new ResourcePath(personalDirectory, objectKey.substring(personalDirectory.length()));
+    }
+
     public boolean isDirectory() {
         return path.endsWith(SEPARATOR_SIGN);
     }

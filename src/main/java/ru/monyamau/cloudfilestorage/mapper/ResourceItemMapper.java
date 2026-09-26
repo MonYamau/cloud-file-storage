@@ -2,26 +2,19 @@ package ru.monyamau.cloudfilestorage.mapper;
 
 import org.springframework.stereotype.Component;
 import ru.monyamau.cloudfilestorage.domain.ResourceItem;
+import ru.monyamau.cloudfilestorage.domain.ResourcePath;
 import ru.monyamau.cloudfilestorage.domain.ResourceType;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
 
 @Component
 public class ResourceItemMapper {
-    public ResponseResourceDto toDto(ResourceItem resourceItem) {
-        String[] resources = resourceItem.objectName().split("/");
-        String path = collectPathWithoutPersonalDirectory(resources);
-        String name = resources[resources.length - 1];
-        if (resourceItem.objectName().endsWith("/") || resourceItem.isDir()) {
-            return new ResponseResourceDto(path, name, null, ResourceType.DIRECTORY);
-        }
-        return new ResponseResourceDto(path, name, resourceItem.size(), ResourceType.FILE);
-    }
-
-    private String collectPathWithoutPersonalDirectory(String[] resources) {
-        StringBuilder path = new StringBuilder();
-        for (int i = 1; i < resources.length - 1; i++) {
-            path.append(resources[i]).append("/");
-        }
-        return path.toString();
+    public ResponseResourceDto toDto(ResourceItem resourceItem, String personalDirectory) {
+        ResourcePath resourcePath = ResourcePath.ofObjectKey(personalDirectory, resourceItem.objectName());
+        String path = resourcePath.getParentDirectoryWithoutPersonalDirectory();
+        String name = resourcePath.getResourceName();
+        ResourceType type = (resourceItem.isDir() || resourcePath.isDirectory())
+                ? ResourceType.DIRECTORY
+                : ResourceType.FILE;
+        return new ResponseResourceDto(path, name, resourceItem.size(), type);
     }
 }
