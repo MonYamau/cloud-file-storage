@@ -1,13 +1,13 @@
 package ru.monyamau.cloudfilestorage.mapper;
 
-import org.mapstruct.Mapper;
+import org.springframework.stereotype.Component;
 import ru.monyamau.cloudfilestorage.domain.ResourceItem;
 import ru.monyamau.cloudfilestorage.domain.ResourceType;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
 
-@Mapper(componentModel = "spring")
-public interface ResourceItemMapper {
-    default ResponseResourceDto toDto(ResourceItem resourceItem) {
+@Component
+public class ResourceItemMapper {
+    public ResponseResourceDto toDto(ResourceItem resourceItem) {
         String[] resources = resourceItem.objectName().split("/");
         String path = collectPathWithoutPersonalDirectory(resources);
         String name = resources[resources.length - 1];
