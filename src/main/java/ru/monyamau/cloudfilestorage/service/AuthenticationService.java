@@ -68,12 +68,9 @@ public class AuthenticationService {
         sessionStorage.delete(key);
     }
 
-    public ResponseUserDto findUser(String key) {
-        String userId = sessionStorage.findBy(key)
-                .orElseThrow(() -> new AuthenticationException("Ошибка аутентификации: не удалось найти актуальную сессию"));
-        int id = Integer.parseInt(userId);
-        User user = userRepository.findUserById(id)
-                .orElseThrow(() -> new IllegalStateException("Ошибка на стороне сервера: не удалось найти пользователя с Id " + id));
+    public ResponseUserDto findUser(Integer userId) {
+        User user = userRepository.findUserById(userId)
+                .orElseThrow(() -> new IllegalStateException("Ошибка на стороне сервера: не удалось найти пользователя с Id " + userId));
         return new ResponseUserDto(user.getName());
     }
 }

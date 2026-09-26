@@ -19,5 +19,5 @@ public interface UserApi {
     @ApiResponse(responseCode = "200", description = "Успешный запрос")
     @AuthenticationErrorApiResponse
     @ServerErrorApiResponse
-    ResponseEntity<ResponseUserDto> showCurrentUser(HttpServletRequest request);
+    ResponseEntity<ResponseUserDto> showCurrentUser();
 }
