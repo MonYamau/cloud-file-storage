@@ -4,30 +4,33 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.http.MediaTypeFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import ru.monyamau.cloudfilestorage.domain.ResourceItem;
 import ru.monyamau.cloudfilestorage.domain.ResourcePath;
 import ru.monyamau.cloudfilestorage.domain.ResourceType;
-import ru.monyamau.cloudfilestorage.dto.request.*;
+import ru.monyamau.cloudfilestorage.dto.request.RequestDirectoryDto;
+import ru.monyamau.cloudfilestorage.dto.request.RequestMovementDto;
+import ru.monyamau.cloudfilestorage.dto.request.RequestQueryDto;
+import ru.monyamau.cloudfilestorage.dto.request.RequestResourceDto;
+import ru.monyamau.cloudfilestorage.dto.request.service.UploadCommand;
+import ru.monyamau.cloudfilestorage.dto.request.service.UploadedFile;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseDownloadDto;
 import ru.monyamau.cloudfilestorage.dto.response.ResponseResourceDto;
 import ru.monyamau.cloudfilestorage.exception.InvalidInputException;
 import ru.monyamau.cloudfilestorage.exception.ResourceAlreadyExistsException;
 import ru.monyamau.cloudfilestorage.exception.ResourceNotFoundException;
-import ru.monyamau.cloudfilestorage.handler.UserContext;
 import ru.monyamau.cloudfilestorage.infrastructure.ResourceStorage;
 import ru.monyamau.cloudfilestorage.mapper.ResourceItemMapper;
 import ru.monyamau.cloudfilestorage.util.ArchiveUtil;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 @Slf4j
 @Service
@@ -35,27 +38,23 @@ public class ResourceService {
     private final static String PERSONAL_DIRECTORY_NAME = "user-%s-files/";
     private final static String ARCHIVE_FORMAT = ".zip";
     private final static String SEPARATOR_SIGN = "/";
-    private final static String ZIP_CONTENT_TYPE = "application/zip";
-    private final static String OCTET_STREAM_CONTENT_TYPE = "application/octet-stream";
     private final static String DEFAULT_RESOURCE_NAME = "download";
 
     private final ResourceStorage resourceStorage;
-    private final UserContext userContext;
     private final ResourceItemMapper resourceItemMapper;
     private final Validator validator;
 
     @Autowired
-    public ResourceService(ResourceStorage resourceStorage, UserContext userContext, ResourceItemMapper resourceItemMapper, Validator validator) {
+    public ResourceService(ResourceStorage resourceStorage, ResourceItemMapper resourceItemMapper, Validator validator) {
         this.resourceStorage = resourceStorage;
-        this.userContext = userContext;
         this.resourceItemMapper = resourceItemMapper;
         this.validator = validator;
     }
 
-    public List<ResponseResourceDto> findAllFromDirectory(RequestDirectoryDto directoryDto) {
-        ResourcePath path = new ResourcePath(formatPersonalDirectory(), directoryDto.path());
+    public List<ResponseResourceDto> findAllFromDirectory(RequestDirectoryDto directoryDto, Integer userId) {
+        ResourcePath path = new ResourcePath(formatPersonalDirectory(userId), directoryDto.path());
         String fullPath = path.getFullPath();
-        checkExistenceOfResource(fullPath);
+        checkExistenceOfResource(fullPath, userId);
         List<ResponseResourceDto> result = new ArrayList<>();
         List<ResourceItem> resources = resourceStorage.findAllFromDirectory(fullPath);
         for (ResourceItem resource : resources) {
@@ -65,19 +64,19 @@ public class ResourceService {
         return result;
     }
 
-    public ResponseResourceDto createDirectory(RequestDirectoryDto directoryDto) {
-        ResourcePath path = new ResourcePath(formatPersonalDirectory(), directoryDto.path());
-        checkExistenceOfResource(path.getParentDirectoryWithPersonalDirectory());
-        checkNonexistenceOfResource(path.getFullPath());
+    public ResponseResourceDto createDirectory(RequestDirectoryDto directoryDto, Integer userId) {
+        ResourcePath path = new ResourcePath(formatPersonalDirectory(userId), directoryDto.path());
+        checkExistenceOfResource(path.getParentDirectoryWithPersonalDirectory(), userId);
+        checkNonexistenceOfResource(path.getFullPath(), userId);
         resourceStorage.createDirectory(path.getFullPath());
         ResourceItem item = resourceStorage.findResource(path.getFullPath())
                 .orElseThrow(() -> new IllegalStateException("Ошибка создания директории: не удалось найти ресурс " + path.getFullPath()));
-        log.info("Create directory {} for user with Id:{}", path.getFullPath(), userContext.getUserId());
+        log.info("Create directory {} for user with Id:{}", path.getFullPath(), userId);
         return resourceItemMapper.toDto(item);
     }
 
-    public ResponseResourceDto findResource(RequestResourceDto resourceDto) {
-        ResourcePath path = new ResourcePath(formatPersonalDirectory(), resourceDto.path());
+    public ResponseResourceDto findResource(RequestResourceDto resourceDto, Integer userId) {
+        ResourcePath path = new ResourcePath(formatPersonalDirectory(userId), resourceDto.path());
         if (path.isPersonalDirectory()) {
             return new ResponseResourceDto("", "", null, ResourceType.DIRECTORY);
         }
@@ -86,10 +85,10 @@ public class ResourceService {
         return resourceItemMapper.toDto(resource);
     }
 
-    public List<ResponseResourceDto> searchResource(RequestQueryDto queryDto) {
-        String personalDirectoryName = formatPersonalDirectoryName();
+    public List<ResponseResourceDto> searchResource(RequestQueryDto queryDto, Integer userId) {
+        String personalDirectoryName = formatPersonalDirectoryName(userId);
         List<ResponseResourceDto> result = new ArrayList<>();
-        List<ResourceItem> resources = resourceStorage.findAllByPrefix(formatPersonalDirectory());
+        List<ResourceItem> resources = resourceStorage.findAllByPrefix(formatPersonalDirectory(userId));
         for (ResourceItem resource : resources) {
             ResponseResourceDto converted = resourceItemMapper.toDto(resource);
             if (personalDirectoryName.equals(converted.name())) continue;
@@ -100,98 +99,95 @@ public class ResourceService {
         return result;
     }
 
-    public void deleteResource(RequestResourceDto resourceDto) {
-        ResourcePath path = new ResourcePath(formatPersonalDirectory(), resourceDto.path());
+    public void deleteResource(RequestResourceDto resourceDto, Integer userId) {
+        ResourcePath path = new ResourcePath(formatPersonalDirectory(userId), resourceDto.path());
         if (path.isPersonalDirectory()) {
             throw new InvalidInputException("Ошибка удаления: нельзя удалить пользовательскую директорию");
         }
-        checkExistenceOfResource(path.getFullPath());
+        checkExistenceOfResource(path.getFullPath(), userId);
         resourceStorage.deleteResource(path.getFullPath());
-        log.info("Delete resource {} for user with Id:{}", path.getFullPath(), userContext.getUserId());
+        log.info("Delete resource {} for user with Id:{}", path.getFullPath(), userId);
     }
 
-    public List<ResponseResourceDto> uploadResource(RequestUploadDto uploadDto) {
-        ResourcePath path = new ResourcePath(formatPersonalDirectory(), uploadDto.path());
-        checkExistenceOfResource(path.getFullPath());
+    public List<ResponseResourceDto> uploadResource(UploadCommand uploadCommand, Integer userId) {
+        ResourcePath path = new ResourcePath(formatPersonalDirectory(userId), uploadCommand.path());
+        checkExistenceOfResource(path.getFullPath(), userId);
         HashSet<Object> uniqueNames = new HashSet<>();
-        for (MultipartFile multipartFile : uploadDto.object()) {
-            String filename = multipartFile.getOriginalFilename();
+        for (UploadedFile file : uploadCommand.files()) {
+            String filename = file.filename();
             if (!uniqueNames.add(filename)) {
                 throw new InvalidInputException("Ошибка загрузки: нельзя загрузить более одного файла с данным именем "
                         + filename);
             }
             validateUploadedFilename(filename);
-            checkNonexistenceOfResource(path.getFullPath() + filename);
+            checkNonexistenceOfResource(path.getFullPath() + filename, userId);
         }
-        List<ResourceItem> resourceItemList = uploadFiles(path.getFullPath(), uploadDto.object());
+        List<ResourceItem> resourceItemList = uploadFiles(path.getFullPath(), uploadCommand.files());
         log.info("Upload {} resources into {} path for user with Id:{}",
-                resourceItemList.size(), path.getFullPath(), userContext.getUserId());
+                resourceItemList.size(), path.getFullPath(), userId);
         return resourceItemList.stream().map(resourceItemMapper::toDto).toList();
     }
 
-    public ResponseResourceDto changeResource(RequestMovementDto movementDto) {
-        ResourcePath oldPath = new ResourcePath(formatPersonalDirectory(), movementDto.from());
-        ResourcePath newPath = new ResourcePath(formatPersonalDirectory(), movementDto.to());
+    public ResponseResourceDto changeResource(RequestMovementDto movementDto, Integer userId) {
+        ResourcePath oldPath = new ResourcePath(formatPersonalDirectory(userId), movementDto.from());
+        ResourcePath newPath = new ResourcePath(formatPersonalDirectory(userId), movementDto.to());
         validateMovement(oldPath, newPath);
-        checkExistenceOfResource(oldPath.getFullPath());
-        checkExistenceOfResource(newPath.getParentDirectoryWithPersonalDirectory());
-        checkNonexistenceOfResource(newPath.getFullPath());
+        checkExistenceOfResource(oldPath.getFullPath(), userId);
+        checkExistenceOfResource(newPath.getParentDirectoryWithPersonalDirectory(), userId);
+        checkNonexistenceOfResource(newPath.getFullPath(), userId);
         resourceStorage.moveResource(oldPath.getFullPath(), newPath.getFullPath());
         ResourceItem resourceItem = resourceStorage.findResource(newPath.getFullPath()).orElseThrow(
                 () -> new IllegalStateException("Ошибка перемещения/переименования: не удалось найти ресурс " + newPath.getFullPath()));
         log.info("Move/rename resource from {} to {} for user with Id:{}",
-                oldPath.getFullPath(), newPath.getFullPath(), userContext.getUserId());
+                oldPath.getFullPath(), newPath.getFullPath(), userId);
         return resourceItemMapper.toDto(resourceItem);
     }
 
-    public ResponseDownloadDto downloadResource(RequestResourceDto resourceDto) {
-        ResourcePath path = new ResourcePath(formatPersonalDirectory(), resourceDto.path());
-        checkExistenceOfResource(path.getFullPath());
+    public ResponseDownloadDto downloadResource(RequestResourceDto resourceDto, Integer userId) {
+        ResourcePath path = new ResourcePath(formatPersonalDirectory(userId), resourceDto.path());
+        checkExistenceOfResource(path.getFullPath(), userId);
         String resourceName = path.isPersonalDirectory() ? DEFAULT_RESOURCE_NAME : path.getResourceName();
-        try {
-            return path.isDirectory() ?
-                    downloadDirectory(path.getFullPath(), resourceName)
-                    : downloadFile(path.getFullPath(), resourceName);
-        } catch (IOException e) {
-            throw new IllegalStateException("Ошибка загрузки: не удалось скачать ресурс " + path.getFullPath(), e);
-        }
+        return path.isDirectory() ?
+                downloadDirectory(path.getFullPath(), resourceName, userId)
+                : downloadFile(path.getFullPath(), resourceName, userId);
     }
 
-    private List<ResourceItem> uploadFiles(String path, List<MultipartFile> files) {
+    private List<ResourceItem> uploadFiles(String path, List<UploadedFile> files) {
         List<ResourceItem> allResources = new ArrayList<>();
-        try {
-            for (MultipartFile file : files) {
-                String filename = file.getOriginalFilename();
-                if (filename == null || filename.endsWith(SEPARATOR_SIGN)) continue;
-                String filePath = resourceStorage
-                        .uploadResource(path + filename, file.getInputStream(), file.getSize(), file.getContentType());
-                allResources.add(new ResourceItem(filePath, false, file.getSize()));
-            }
-            return allResources;
-        } catch (IOException e) {
-            throw new IllegalStateException("Ошибка загрузки: не удалось сохранить ресурс", e);
+        for (UploadedFile file : files) {
+            String filename = file.filename();
+            if (filename == null || filename.endsWith(SEPARATOR_SIGN)) continue;
+            String filePath = resourceStorage
+                    .uploadResource(path + filename, file.inputStream(), file.size(), file.contentType());
+            allResources.add(new ResourceItem(filePath, false, file.size()));
         }
+        return allResources;
     }
 
-    private ResponseDownloadDto downloadFile(String fullPath, String filename) throws IOException {
-        StreamingResponseBody body = outputStream -> {
+    private ResponseDownloadDto downloadFile(String fullPath, String filename, Integer userId) {
+        Consumer<OutputStream> performer = outputStream -> {
             try (InputStream inputStream = resourceStorage.downloadResource(fullPath)) {
                 inputStream.transferTo(outputStream);
+            } catch (IOException e) {
+                throw new IllegalStateException("Ошибка загрузки: не удалось скачать ресурс " + fullPath, e);
             }
         };
-        String fileContentType = MediaTypeFactory.getMediaType(filename)
-                .map(MediaType::toString)
-                .orElse(OCTET_STREAM_CONTENT_TYPE);
-        log.info("Download file from {} for user with Id:{}", fullPath, userContext.getUserId());
-        return new ResponseDownloadDto(filename, fileContentType, body);
+        log.info("Download file from {} for user with Id:{}", fullPath, userId);
+        return new ResponseDownloadDto(filename, performer);
     }
 
-    private ResponseDownloadDto downloadDirectory(String fullPath, String directoryName) throws IOException {
+    private ResponseDownloadDto downloadDirectory(String fullPath, String directoryName, Integer userId) {
         List<ResourceItem> resourceItemList = resourceStorage.findAllByPrefix(fullPath);
-        StreamingResponseBody body = outputStream -> ArchiveUtil
-                .archiveItemsToZip(resourceItemList, outputStream, fullPath, resourceStorage::downloadResource);
-        log.info("Download archive from {} for user with Id:{}", fullPath,  userContext.getUserId());
-        return new ResponseDownloadDto(directoryName + ARCHIVE_FORMAT, ZIP_CONTENT_TYPE, body);
+        Consumer<OutputStream> performer = outputStream -> {
+            try {
+                ArchiveUtil
+                        .archiveItemsToZip(resourceItemList, outputStream, fullPath, resourceStorage::downloadResource);
+            } catch (IOException e) {
+                throw new IllegalStateException("Ошибка загрузки: не удалось скачать архив " + fullPath, e);
+            }
+        };
+        log.info("Download archive from {} for user with Id:{}", fullPath, userId);
+        return new ResponseDownloadDto(directoryName + ARCHIVE_FORMAT, performer);
     }
 
     private void validateMovement(ResourcePath oldPath, ResourcePath newPath) {
@@ -219,22 +215,22 @@ public class ResourceService {
         }
     }
 
-    private void checkExistenceOfResource(String pathWithPersonalDirectory) {
-        if (!isResourceExists(pathWithPersonalDirectory)) {
-            String path = pathWithPersonalDirectory.substring(formatPersonalDirectory().length());
+    private void checkExistenceOfResource(String pathWithPersonalDirectory, Integer userId) {
+        if (!isResourceExists(pathWithPersonalDirectory, userId)) {
+            String path = pathWithPersonalDirectory.substring(formatPersonalDirectory(userId).length());
             throw new ResourceNotFoundException("Ресурс по данному пути не найден: " + path);
         }
     }
 
-    private void checkNonexistenceOfResource(String pathWithPersonalDirectory) {
-        if (isResourceExists(pathWithPersonalDirectory)) {
-            String path = pathWithPersonalDirectory.substring(formatPersonalDirectory().length());
+    private void checkNonexistenceOfResource(String pathWithPersonalDirectory, Integer userId) {
+        if (isResourceExists(pathWithPersonalDirectory, userId)) {
+            String path = pathWithPersonalDirectory.substring(formatPersonalDirectory(userId).length());
             throw new ResourceAlreadyExistsException("Ресурс по данному пути уже существует: " + path);
         }
     }
 
-    private boolean isResourceExists(String path) {
-        if (path.equals(formatPersonalDirectory())) {
+    private boolean isResourceExists(String path, Integer userId) {
+        if (path.equals(formatPersonalDirectory(userId))) {
             return true;
         }
         return resourceStorage.findResource(path).isPresent();
@@ -244,11 +240,11 @@ public class ResourceService {
         return name.toLowerCase().contains(query.toLowerCase());
     }
 
-    private String formatPersonalDirectory() {
-        return PERSONAL_DIRECTORY_NAME.formatted(userContext.getUserId());
+    private String formatPersonalDirectory(Integer userId) {
+        return PERSONAL_DIRECTORY_NAME.formatted(userId);
     }
 
-    private String formatPersonalDirectoryName() {
-        return formatPersonalDirectory().replace(SEPARATOR_SIGN, "");
+    private String formatPersonalDirectoryName(Integer userId) {
+        return formatPersonalDirectory(userId).replace(SEPARATOR_SIGN, "");
     }
 }

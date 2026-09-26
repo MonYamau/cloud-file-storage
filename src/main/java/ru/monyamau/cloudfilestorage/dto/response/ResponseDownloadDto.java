@@ -1,6 +1,7 @@
 package ru.monyamau.cloudfilestorage.dto.response;
 
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import java.io.OutputStream;
+import java.util.function.Consumer;
 
-public record ResponseDownloadDto(String filename, String contentType, StreamingResponseBody body) {
+public record ResponseDownloadDto(String filename, Consumer<OutputStream> performer) {
 }
