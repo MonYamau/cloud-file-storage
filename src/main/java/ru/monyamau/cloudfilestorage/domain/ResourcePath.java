@@ -8,6 +8,7 @@ public record ResourcePath(String personalDirectory, String path) {
             path = "";
         }
     }
+
     public boolean isDirectory() {
         return path.endsWith(SEPARATOR_SIGN);
     }
