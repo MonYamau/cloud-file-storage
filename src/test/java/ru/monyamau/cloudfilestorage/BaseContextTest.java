@@ -1,13 +1,9 @@
 package ru.monyamau.cloudfilestorage;
 
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.*;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
 import ru.monyamau.cloudfilestorage.config.ApplicationConfig;
@@ -16,24 +12,28 @@ import ru.monyamau.cloudfilestorage.config.ApplicationConfig;
 @ContextConfiguration(classes = ApplicationConfig.class)
 @Testcontainers
 @ActiveProfiles("test")
+@TestPropertySource(properties = "spring.profiles.active=test")
 public abstract class BaseContextTest {
-    @Container
     protected static final MySQLContainer MY_SQL_CONTAINER = new MySQLContainer("mysql:9.7")
             .withDatabaseName("test_db")
             .withUsername("test_user")
             .withPassword("test_password");
 
-    @Container
     protected static final GenericContainer REDIS_CONTAINER = new GenericContainer("redis:8.8")
             .withEnv("host", "localhost")
             .withExposedPorts(6379);
 
-    @Container
     protected static final GenericContainer MINIO_CONTAINER = new GenericContainer("minio/minio:RELEASE.2025-09-07T16-13-09Z")
             .withEnv("MINIO_ROOT_USER", "minioadmin")
             .withEnv("MINIO_ROOT_PASSWORD", "minioadmin")
             .withCommand("server /data")
             .withExposedPorts(9000);
+
+    static {
+        MY_SQL_CONTAINER.start();
+        REDIS_CONTAINER.start();
+        MINIO_CONTAINER.start();
+    }
 
     @DynamicPropertySource
     static void overrideProperties(DynamicPropertyRegistry registry) {

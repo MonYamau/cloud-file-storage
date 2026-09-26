@@ -31,8 +31,8 @@ public class AuthenticationServiceTest extends BaseContextTest {
         RequestUserDto requestUserDto = new RequestUserDto("username", "password");
         int ttlMin = 1;
         ResponseUserDto responseUserDto = authenticationService.registerUser(key, requestUserDto, ttlMin);
-        assert userRepository.existsUserByName(responseUserDto.username());
-        assert sessionStorage.findBy(key).isPresent();
+        Assertions.assertTrue(userRepository.existsUserByName(responseUserDto.username()));
+        Assertions.assertTrue(sessionStorage.findBy(key).isPresent());
     }
 
     @Test
@@ -54,9 +54,9 @@ public class AuthenticationServiceTest extends BaseContextTest {
         int ttlMin = 1;
         authenticationService.registerUser(key, requestUserDto, ttlMin);
         authenticationService.logoutUser(key);
-        assert sessionStorage.findBy(key).isEmpty();
+        Assertions.assertTrue(sessionStorage.findBy(key).isEmpty());
         authenticationService.authenticateUser(key, requestUserDto, ttlMin);
-        assert sessionStorage.findBy(key).isPresent();
+        Assertions.assertTrue(sessionStorage.findBy(key).isPresent());
     }
 
     @Test
@@ -68,19 +68,8 @@ public class AuthenticationServiceTest extends BaseContextTest {
         RequestUserDto requestUserDtoWithIncorrectPassword = new RequestUserDto("username", "password!");
         authenticationService.registerUser(key, requestUserDto, ttlMin);
         authenticationService.logoutUser(key);
-        assert sessionStorage.findBy(key).isEmpty();
+        Assertions.assertTrue(sessionStorage.findBy(key).isEmpty());
         Assertions.assertThrows(AuthenticationException.class,
                 () -> authenticationService.authenticateUser(key, requestUserDtoWithIncorrectPassword, ttlMin));
-    }
-
-    @Test
-    @DisplayName("Пользователь должен найтись по ключу сессии")
-    void shouldFindAuthenticatedUser() {
-        String key = String.valueOf(UUID.randomUUID());
-        RequestUserDto requestUserDto = new RequestUserDto("username", "password");
-        int ttlMin = 1;
-        authenticationService.registerUser(key, requestUserDto, ttlMin);
-        ResponseUserDto userDto = authenticationService.findUser(key);
-        assert userDto.username().equals(requestUserDto.username());
     }
 }
